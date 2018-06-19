@@ -9,15 +9,15 @@ public class VideoUtils {
 
     public native static void decode(String input, String output);
 
-   /* static {
-        System.loadLibrary("avutil-54");
-        System.loadLibrary("swresample-1");
-        System.loadLibrary("avcodec-56");
-        System.loadLibrary("avformat-56");
-        System.loadLibrary("swscale-3");
-        System.loadLibrary("postproc-53");
-        System.loadLibrary("avfilter-5");
-        System.loadLibrary("avdevice-56");
-        System.loadLibrary("myffmpeg");
-    }*/
+    static {
+        System.loadLibrary("libavcodec-56");
+        System.loadLibrary("libavdevice-56");
+        System.loadLibrary("libavfilter-5");
+        System.loadLibrary("libavformat-56");
+        System.loadLibrary("libavutil-54");
+        System.loadLibrary("libmyffmpeg");
+        System.loadLibrary("libpostproc-53");
+        System.loadLibrary("libswresample-1");
+        System.loadLibrary("libswscale-3");
+    }
 }
