@@ -3,17 +3,16 @@
 //
 #include <jni.h>
 #include <string.h>
+#include <android/log.h>
 
-
-//解码
 //封装格式处理
 #include "include/libavformat/avformat.h"
-//像素处理
+//像素处理 缩放
 #include "include/libswscale/swscale.h"
 
 #include "include/libavutil/frame.h"
+//解码
 #include "include/libavcodec/avcodec.h"
-
 
 #define LOGI(FORMAT, ...) __android_log_print(ANDROID_LOG_INFO,"FFmpeg",FORMAT,##__VA_ARGS__);
 #define LOGE(FORMAT, ...) __android_log_print(ANDROID_LOG_ERROR,"FFmpeg",FORMAT,##__VA_ARGS__);
@@ -36,7 +35,7 @@ Java_jbox2d_example_com_ffmpeg_1demo_utils_VideoUtils_decode(JNIEnv *env,
     AVFormatContext *pFormatCtx = avformat_alloc_context();
 
     //2. 打开输入视频文件
-    if (avformat_open_input(pFormatCtx, input_cstr, NULL, NULL) != 0) {
+    if (avformat_open_input(&pFormatCtx, input_cstr, NULL, NULL) != 0) {
         LOGE("%s", "无法打开输入视频文件");
         return;
     }
@@ -50,7 +49,6 @@ Java_jbox2d_example_com_ffmpeg_1demo_utils_VideoUtils_decode(JNIEnv *env,
     //获取视频流的索引位置
     //遍历所有类型的流（音频流、视频流、字幕流），找到视频流
     int v_stream_idx = -1;
-    int i = 0;
     for (int i = 0; i < pFormatCtx->nb_streams; ++i) {
         if (pFormatCtx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
             v_stream_idx = i;
@@ -107,22 +105,20 @@ Java_jbox2d_example_com_ffmpeg_1demo_utils_VideoUtils_decode(JNIEnv *env,
     // 初始化缓冲区
     avpicture_fill((AVPicture *) pFrameYUV, out_buffer, AV_PIX_FMT_YUV420P, pCodecCtx->width,
                    pCodecCtx->height);
-    // 用于转码（缩放）的参数，转之前的宽高，格式等
 
     //用于转码（缩放）的参数，转之前的宽高，转之后的宽高，格式等
     struct SwsContext *sws_ctx = sws_getContext(pCodecCtx->width, pCodecCtx->height,
                                                 pCodecCtx->pix_fmt,
                                                 pCodecCtx->width, pCodecCtx->height,
                                                 AV_PIX_FMT_YUV420P,
-                                                SWS_BICUBIC, NULL, NULL, NULL);
+                                                SWS_BILINEAR, NULL, NULL, NULL);
 
     // argus
-    int got_picture, ret;
+    int got_picture, ret,frame_count = 0;
 
     // 编码之后的视频文件
     FILE *fp_yuv = fopen(output_cstr, "wb+");
 
-    int frame_count = 0;
 
     // 6 . 一帧一帧的读取压缩数据
     while (av_read_frame(pFormatCtx, packet) >= 0) {
@@ -138,29 +134,34 @@ Java_jbox2d_example_com_ffmpeg_1demo_utils_VideoUtils_decode(JNIEnv *env,
             }
             // 为0说明解码完成，非0正在解码
             if (got_picture) {
-                //AVFrame转为像素格式YUV420，宽高
-                //2 6输入、输出数据
-                //3 7输入、输出画面一行的数据的大小 AVFrame 转换是一行一行转换的
-                //4 输入数据第一列要转码的位置 从0开始
-                //5 输入画面的高度
+                //frame->yuvFrame (YUV420P)
+                //转为指定的YUV420P像素帧
                 sws_scale(sws_ctx, pFrame->data, pFrame->linesize, 0, pCodecCtx->height,
                           pFrameYUV->data, pFrameYUV->linesize);
-                //输出到YUV文件
-                //AVFrame像素帧写入文件
-                //data解码后的图像像素数据（音频采样数据）
-                //Y 亮度 UV 色度（压缩了） 人对亮度更加敏感
-                //U V 个数是Y的1/4
+
+                //向YUV文件保存解码之后的帧数据
+                //AVFrame->YUV
+                //一个像素包含一个Y
                 int y_size = pCodecCtx->width * pCodecCtx->height;
                 fwrite(pFrameYUV->data[0], 1, y_size, fp_yuv);
                 fwrite(pFrameYUV->data[1], 1, y_size / 4, fp_yuv);
                 fwrite(pFrameYUV->data[2], 1, y_size / 4, fp_yuv);
-                frame_count++;
-                LOGI("解码第%d帧",frame_count);
+
+
+                LOGI("解码第%d帧",frame_count++);
             }
         }
         //释放资源
         av_free_packet(packet);
     }
+
+    if ((*env)->ExceptionCheck) {
+        (*env)->ExceptionDescribe;
+//        (*env)->ExceptionClear;
+
+    }
+
+
     fclose(fp_yuv);
 
     av_frame_free(&pFrame);// 释放内存

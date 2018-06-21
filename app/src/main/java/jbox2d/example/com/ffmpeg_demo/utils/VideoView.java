@@ -31,8 +31,5 @@ public class VideoView extends SurfaceView {
         // 初始化，SurfaceView 绘制的像素格式
         SurfaceHolder holder = getHolder();
         holder.setFormat(PixelFormat.RGBA_8888);
-
-
-
     }
 }

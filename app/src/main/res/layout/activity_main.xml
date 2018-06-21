@@ -1,34 +1,49 @@
-<?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="jbox2d.example.com.ffmpeg_demo.MainActivity">
-
-
-    <Button
-        android:id="@+id/button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="20dp"
-        android:text="解码"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    android:orientation="vertical" >
 
     <Button
-        android:id="@+id/button_start"
-        android:layout_width="wrap_content"
+        android:id="@+id/btn_decode"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="20dp"
-        android:text="开始"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/button"
-       />
-
-    <jbox2d.example.com.ffmpeg_demo.utils.VideoView
-        android:id="@+id/surfaceView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
-</android.support.constraint.ConstraintLayout>
+        android:text="视频解码"
+        />
+    <Button
+        android:id="@+id/btn_render"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="视频播放"
+        />
+    <Button
+        android:id="@+id/btn_audio_decode"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="音频解码"
+        />
+    <Button
+        android:id="@+id/btn_audio_player"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="音频播放"
+        />
+    <Button
+        android:id="@+id/btn_play"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="音视频同步播放用C实现"
+        />
+    <Button
+        android:id="@+id/btn_transcoding_compress"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="转码压缩"
+        />
+    <Button
+        android:id="@+id/btn_addWatermark"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="视频添加水印"
+        />
+</LinearLayout>
