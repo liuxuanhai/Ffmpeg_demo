@@ -8,15 +8,18 @@ import android.view.Surface;
  * @Desc:
  */
 public class VideoUtils {
-
+    //视频解码
     public native static void decode(String input, String output);
 
-    /**
-     * 1.lock window
-     * 2. 缓冲器赋值
-     * 3.unlock window
-     */
+    //视频播放
     public native void render(String input, Surface surface);
+
+    //音频解码
+    public native void audioDecode(String input, String output);
+
+    //音频播放
+    public native void audioPlayer(String input );
+
 
     static {
         System.loadLibrary("libavcodec-56");

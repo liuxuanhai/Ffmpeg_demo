@@ -157,6 +157,12 @@ Java_jbox2d_example_com_ffmpeg_1demo_utils_VideoUtils_render(JNIEnv *env, jobjec
             // 为0说明解码完成，非0正在解码
             if (got_picture) {
                 LOGI("%s", frameCount++);
+
+                /**
+ * 1.lock window
+ * 2. 缓冲器赋值
+ * 3.unlock window
+ */
                 // lock
                 ANativeWindow_lock(nativeWindow, &outBuffer, 0);
 
