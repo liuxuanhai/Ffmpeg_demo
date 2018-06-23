@@ -26,6 +26,7 @@
 #define MAX_AUDIO_FRME_SIZE  2 * 44100
 
 
+//音频解码
 extern "C"
 JNIEXPORT void JNICALL
 Java_jbox2d_example_com_ffmpeg_1demo_utils_VideoUtils_audioDecode(JNIEnv *env,
@@ -101,15 +102,15 @@ Java_jbox2d_example_com_ffmpeg_1demo_utils_VideoUtils_audioDecode(JNIEnv *env,
                        0, NULL);
     swr_init(swrCtx);
 
-    int out_channel_nb=av_get_channel_layout_nb_channels(out_ch_layout);
+    int out_channel_nb = av_get_channel_layout_nb_channels(out_ch_layout);
     LOGI("out_count:%d", out_channel_nb);
     //重采样设置参数 --------------  end
 
     // 16bit 44100 PCM 数据
-    uint8_t *out_buffer=(uint8_t *)av_malloc(MAX_AUDIO_FRME_SIZE);
+    uint8_t *out_buffer = (uint8_t *) av_malloc(MAX_AUDIO_FRME_SIZE);
 
-    FILE *fp_pcm=fopen(output_cstr,"wb");
-    int got_frame=0,framecount=0,ret;
+    FILE *fp_pcm = fopen(output_cstr, "wb");
+    int got_frame = 0, framecount = 0, ret;
     // 6.一帧一帧读取压缩的音频数据AVPacket
     while (av_read_frame(pFormatCtx, avPacket) >= 0) {
         if (avPacket->stream_index == audio_stream_idx) {
@@ -120,10 +121,10 @@ Java_jbox2d_example_com_ffmpeg_1demo_utils_VideoUtils_audioDecode(JNIEnv *env,
                 return;
             }
             //非0，正在解码
-            if (got_frame>0) {
+            if (got_frame > 0) {
                 LOGI("解码：%d", framecount++);
-                swr_convert(swrCtx,&out_buffer,MAX_AUDIO_FRME_SIZE,
-                            (uint8_t**)frame->data,frame->nb_samples);
+                swr_convert(swrCtx, &out_buffer, MAX_AUDIO_FRME_SIZE,
+                            (uint8_t **) frame->data, frame->nb_samples);
                 //获取sample的size
                 int out_buffer_size = av_samples_get_buffer_size(NULL,
                                                                  out_channel_nb,
@@ -145,4 +146,143 @@ Java_jbox2d_example_com_ffmpeg_1demo_utils_VideoUtils_audioDecode(JNIEnv *env,
 
     (*env)->ReleaseStringUTFChars(env, input_jstr, input_cstr);
     (*env)->ReleaseStringUTFChars(env, output_jstr, output_cstr);
+}
+
+
+//音频播放
+JNIEXPORT void JNICALL
+Java_jbox2d_example_com_ffmpeg_1demo_utils_VideoUtils_audioPlayer(JNIEnv *env, jobject instance,
+                                                                  jstring input_) {
+    const char *input_cstr = (*env)->GetStringUTFChars(env, input_, 0);
+    //注册组件
+    av_register_all();
+    AVFormatContext *pFormatCtx = avformat_alloc_context();
+    //打开音频文件
+    if (avformat_open_input(pFormatCtx, input_cstr, NULL, NULL) != 0) {
+        LOGI("%s", "无法打开音频文件");
+        return;
+    }
+    //获取输入文件信息
+    if (avformat_find_stream_info(pFormatCtx, NULL) < 0) {
+        LOGI("%s", "无法获取输入文件信息");
+        return;
+    }
+    int audio_stream_idx = 0;
+    for (int i = 0; i < pFormatCtx->nb_streams; ++i) {
+        if (pFormatCtx->streams[i]->codec->codec_type == AVMEDIA_TYPE_AUDIO) {
+            audio_stream_idx = i;
+            break;
+        }
+    }
+    if (audio_stream_idx == -1) {
+        LOGI("%s", "找不到音频流");
+        return;
+    }
+    //获取解码器
+    AVCodecContext *pCodeCtx = pFormatCtx->streams[audio_stream_idx]->codec;
+    AVCodec *codec = avcodec_find_decoder(pCodeCtx->codec_id);
+    if (codec == NULL) {
+        LOGI("%s", "无法获取加码器");
+        return;
+    }
+    if (avcodec_open2(pCodeCtx, codec, NULL) != 0) {
+        LOGI("%s", "无法打开解码器");
+        return;
+    }
+
+    //压缩数据
+    AVPacket *packet = (AVPacket *) av_malloc(sizeof(AVPacket));
+    //解压缩数据
+    AVFrame *frame = av_frame_alloc();
+    struct SwsContext *swrCtx = swr_alloc();
+
+    //frame->16bit  44100 PCM 统一音频采样格式与采样率
+    // 格式
+    enum AVSampleFormat *in_sample_fmt = pCodeCtx->sample_fmt;
+    enum AVSampleFormat *out_sample_fmt = AV_SAMPLE_FMT_S16;
+    // 采样率
+    int in_sample_rate = pCodeCtx->sample_rate;
+    int out_sample_rate = 44100;
+
+    uint64_t in_ch_layout = pCodeCtx->channel_layout;
+    uint64_t out_ch_layout = AV_CH_LAYOUT_STEREO;
+
+    swr_alloc_set_opts(swrCtx,
+                       in_ch_layout, in_sample_fmt, in_sample_rate,
+                       out_ch_layout, out_sample_fmt, out_sample_rate,
+                       0, NULL); // 日志级别 ，父日志上下文
+    swr_init(swrCtx);
+
+    // 输入输出的声道个数
+    int out_channel_nb = av_get_channel_layout_nb_channels(out_ch_layout);
+    LOGI("out_count:%d", out_channel_nb);
+
+
+    jclass cls = (*env)->FindClass(env, "jbox2d.example.com.ffmpeg_demo.utils.AudioUtil");
+    jmethodID constructor_mid = (*env)->GetMethodID(env, cls, "<init>", "()V");
+    //实例化一个AudioUtil对象(可以在constructor_mid后加参)
+    jobject audioutil_obj = (*env)->NewObject(env, cls, constructor_mid);
+
+    // AudioTrack对象
+    jmethodID create_audio_track_mid = (*env)->GetMethodID(env, cls, "createAudioTrack",
+                                                           "(II)Landroid/media/AudioTrack");
+    jobject audio_track = (*env)->CallObjectMethod(env, audioutil_obj, create_audio_track_mid,
+                                                   out_sample_rate, out_channel_nb);
+    // 调用AudioTrack.play方法
+    jclass audio_track_class = (*env)->GetObjectClass(env, audio_track);
+    jmethodID audio_track_play_mid = (*env)->GetMethodID(env, audio_track_class, "play", "()V");
+    (*env)->CallVoidMethod(env, audio_track, audio_track_play_mid);
+
+    // AudioTrack.write
+    jmethodID audio_track_write_mid = (*env)->GetMethodID(env, audio_track_class, "write",
+                                                          "([BII)I");
+
+    //16bit 44100 PCM 数据
+    uint8_t *out_buffer = (uint8_t *) av_malloc(MAX_AUDIO_FRME_SIZE);
+    int got_frame=0,frameCount=0,ret;
+    // 6.一帧一帧读取压缩的音频数据AVPacket
+    while (av_read_frame(pFormatCtx, packet) >= 0) {
+        // 解码音频类型的Packet，  packet 有可能是音频数据流 有可能是视频数据流
+        if (packet->stream_index == audio_stream_idx) {
+            // 解码
+            ret=avcodec_decode_audio4(pCodeCtx,frame,&got_frame,packet);
+            if (ret < 0) {
+                LOGI("%s", "解码完成");
+                return;
+            }
+            //非0，正在解码
+            if (got_frame > 0) {
+                LOGI("解码：%d", frameCount++);
+                swr_convert(swrCtx, &out_buffer, MAX_AUDIO_FRME_SIZE,
+                            (const uint8_t **) frame->data, frame->nb_samples);
+                int out_buffer_size = av_samples_get_buffer_size(NULL,
+                                                                 out_channel_nb, frame->nb_samples,
+                                                                 out_sample_fmt, 1);
+                // out_buffer缓冲区的数据，转换成bute数组
+                jbyteArray audio_sample_array = (*env)->NewByteArray(env, out_buffer_size);
+
+
+
+
+
+
+
+                usleep(1000 * 16); //16ms
+            }
+        }
+        av_free_packet(packet);
+    }
+
+
+
+    av_frame_free(&frame);
+    av_free(out_buffer);
+    swr_free(&swrCtx);
+    avcodec_close(pCodeCtx);
+    avformat_close_input(&pFormatCtx);
+
+    //释放局部引用  否则报错JNI ERROR (app bug): local reference table overflow (max=512)
+    (*env)->DeleteLocalRef(env,audioutil_obj);
+
+    (*env)->ReleaseStringUTFChars(env, input_, input_cstr);
 }
