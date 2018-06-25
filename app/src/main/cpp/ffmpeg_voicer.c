@@ -239,13 +239,13 @@ Java_jbox2d_example_com_ffmpeg_1demo_utils_VideoUtils_audioPlayer(JNIEnv *env, j
 
     //16bit 44100 PCM 数据
     uint8_t *out_buffer = (uint8_t *) av_malloc(MAX_AUDIO_FRME_SIZE);
-    int got_frame=0,frameCount=0,ret;
+    int got_frame = 0, frameCount = 0, ret;
     // 6.一帧一帧读取压缩的音频数据AVPacket
     while (av_read_frame(pFormatCtx, packet) >= 0) {
         // 解码音频类型的Packet，  packet 有可能是音频数据流 有可能是视频数据流
         if (packet->stream_index == audio_stream_idx) {
             // 解码
-            ret=avcodec_decode_audio4(pCodeCtx,frame,&got_frame,packet);
+            ret = avcodec_decode_audio4(pCodeCtx, frame, &got_frame, packet);
             if (ret < 0) {
                 LOGI("%s", "解码完成");
                 return;
@@ -255,24 +255,28 @@ Java_jbox2d_example_com_ffmpeg_1demo_utils_VideoUtils_audioPlayer(JNIEnv *env, j
                 LOGI("解码：%d", frameCount++);
                 swr_convert(swrCtx, &out_buffer, MAX_AUDIO_FRME_SIZE,
                             (const uint8_t **) frame->data, frame->nb_samples);
+
+                // 调用audioTrack.write() 方法播放音频
                 int out_buffer_size = av_samples_get_buffer_size(NULL,
                                                                  out_channel_nb, frame->nb_samples,
                                                                  out_sample_fmt, 1);
                 // out_buffer缓冲区的数据，转换成bute数组
                 jbyteArray audio_sample_array = (*env)->NewByteArray(env, out_buffer_size);
+                jbyte *sample_byte = (*env)->GetByteArrayElements(env, audio_sample_array, NULL);
 
+                // 将out_buffer的数据复制到sample_byte
+                memcpy(sample_byte, out_buffer, out_buffer_size);
 
-
-
-
-
+                (*env)->ReleaseByteArrayElements(env, audio_sample_array, sample_byte, 0);
+                (*env)->CallIntMethod(env, audio_track, audio_track_write_mid, audio_sample_array,
+                                      0, out_buffer_size);
+                (*env)->DeleteLocalRef(env, audio_sample_array);
 
                 usleep(1000 * 16); //16ms
             }
         }
         av_free_packet(packet);
     }
-
 
 
     av_frame_free(&frame);
@@ -282,7 +286,7 @@ Java_jbox2d_example_com_ffmpeg_1demo_utils_VideoUtils_audioPlayer(JNIEnv *env, j
     avformat_close_input(&pFormatCtx);
 
     //释放局部引用  否则报错JNI ERROR (app bug): local reference table overflow (max=512)
-    (*env)->DeleteLocalRef(env,audioutil_obj);
+    (*env)->DeleteLocalRef(env, audioutil_obj);
 
     (*env)->ReleaseStringUTFChars(env, input_, input_cstr);
 }

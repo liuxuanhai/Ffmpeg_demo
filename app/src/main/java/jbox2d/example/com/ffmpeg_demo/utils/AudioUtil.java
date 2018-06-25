@@ -9,6 +9,17 @@ import android.util.Log;
  * @Author: Ycl
  * @Date: 2018/6/23 15:08
  * @Desc: 创建播放器
+ * 签名
+ * public class jbox2d.example.com.ffmpeg_demo.utils.AudioUtil {
+ * public jbox2d.example.com.ffmpeg_demo.utils.AudioUtil();
+ * descriptor: ()V
+ * <p>
+ * public int write(byte[], int, int);
+ * descriptor: ([BII)I
+ * <p>
+ * public android.media.AudioTrack createAudioTrack(int, int);
+ * descriptor: (II)Landroid/media/AudioTrack;
+ * }
  */
 public class AudioUtil {
 
