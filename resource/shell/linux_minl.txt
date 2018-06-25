@@ -72,9 +72,104 @@ chmod 644 file
 给用户加上执行权限
 chmod u+x file
 
+u 代表用户.
+g 代表用户组.
+o 代表其他.
+a 代表所有.
+
 改变创建目录的默认权限
 umask 026
 
-现在是: 777-026= 751 
+现在是: 777-026= 751
 
-uma
+改变文件的所属
+chown user.group file
+chown user file     改变其所属用户
+chown .user file    改变用户组
+
+----------------------------- shell 脚本 --------------
+
+输出at
+echo
+#!bin/bash
+
+  1 #!/bin/bash
+  2 NDK=10
+  3 text="i love shell"
+  4
+  5 #命令的执行结果的输出作为变量的值
+  6 text1=`date`
+  7 text2=$(who)
+  8 echo $NDK
+  9 echo $text
+ 10 echo "$text very much
+
+ 11 echo "\$NDK"
+ 12 #echo $text1
+ 13 #echo $text2
+
+命令执行退出的状态：
+0 成功
+127 没有找到命令
+1 未知错误
+126 命令不可执行vim
+
+只有if命令的退出状态码为0，才会执行then部分
+if 命令
+then
+    命令
+fi
+
+test 数值比较
+-gt
+-eq 等于
+-le
+-ne 不等于
+
+test字符串比较
+str1 == str2
+str1 != str2
+str1 < str2
+-n str1 长度是否非0
+-z str1 长度是否为0
+
+文件比较
+-d 检查是否存在，并且是一个目录
+-e 检查file是否存在
+-f 检查是否存在，并且是一个文件
+-r 检查是否存在，并且可读
+-w、-x
+file1 -nt file2 file1比file2新
+file1 -ot file2 file1比file2旧
+
+case命令
+case 变量 in
+pattern1) 命令;;
+pattern2) 命令;;
+*) 默认命令;;
+esac
+
+for命令
+for var in list
+do
+	命令
+done
+
+while命令
+while test command
+do
+	命令
+done
+
+输入输出重定向
+./14.sh 1> test7 将标准输出重定向到test7文件，不再输出到屏幕上
+
+
+编译ffmpeg
+编写shell脚本之前，要执行./configure --disable-yasm，主要目录进行一系列的准备工作，比如说检查gcc的版本，会生成config.mak等文件
+
+
+
+
+
+
