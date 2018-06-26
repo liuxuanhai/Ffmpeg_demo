@@ -62,7 +62,7 @@
        mkdir /forlinx （新建/forlinx 作为我们的工作目录）
       chmod 777 /forlinx               ，我这里直接使用 /var
     2.3 对 vsftpd 进行配置，输入命令：
-       sudo  /etc/vsftpd.conf
+       sudo vim /etc/vsftpd.conf
       主要做以下修改，使以下设置生效：（#符号是注释符，被注释的部分是无法起作用的）：
       anonymous_enable=NO
      local_enable=YES
