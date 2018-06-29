@@ -8,6 +8,7 @@
 // native_window
 #include <android/native_window_jni.h>
 #include <android/native_window.h>
+#include <pthread.h>
 #include "libyuv/libyuv.h"
 
 
@@ -34,6 +35,10 @@ struct Player {
     int video_stream_index;
     int audio_stream_index;
     AVCodecContext *input_codec_ctx[MAX_STREAM];
+    // 绘制window
+    ANativeWindow *nativeWindow;
+    //解码线程pid
+    pthread_t decode_threads[MAX_STREAM];
 };
 
 
@@ -115,9 +120,91 @@ void log_video_audio_info(struct Player *pPlayer) {
 //    LOGI("解码器的名称：%s",  pPlayer->input_codec_ctx[stream_idx]->name);
 }
 
-JNIEXPORT  void JNICALL
+void decode_video_prepare(JNIEnv *env, struct Player *pPlayer, jobject surface) {
+    // native绘制
+    pPlayer->nativeWindow = ANativeWindow_fromSurface(env, surface);
+}
+
+/**
+ * 解码视频
+ */
+void decode_video(struct Player *pPlayer, AVPacket *pPacket) {
+    //像素数据（解码数据）
+    AVFrame *yuv_frame = av_frame_alloc();
+    AVFrame *rgb_frame = av_frame_alloc();
+    if (rgb_frame == NULL || yuv_frame == NULL) {
+        LOGE("Could not allocate video frame.");
+        return;
+    }
+
+    AVCodecContext *codec_ctx = pPlayer->input_codec_ctx[pPlayer->video_stream_index];
+    ANativeWindow_Buffer outBuffer;
+
+    int got_picture, ret;
+    //7.解码一帧视频压缩数据 ,解码AVPacket->AVFrame
+    ret = avcodec_decode_video2(codec_ctx, yuv_frame, &got_picture, pPacket);
+    if (ret < 0) {
+        LOGE("%s", "解码错误");
+        return;
+    }
+    // 为0说明解码完成，非0正在解码
+    if (got_picture) {
+        //lock
+        //设置缓冲区的属性（宽、高、像素格式）
+        ANativeWindow_setBuffersGeometry(pPlayer->nativeWindow,
+                                         codec_ctx->width,
+                                         codec_ctx->height,
+                                         WINDOW_FORMAT_RGBA_8888);
+        ANativeWindow_lock(pPlayer->nativeWindow, &outBuffer, 0);
+
+        //设置rgb_frame的属性（像素格式、宽高）和缓冲区
+        //rgb_frame缓冲区与outBuffer.bits是同一块内存
+        avpicture_fill((AVPicture *) rgb_frame, outBuffer.bits, AV_PIX_FMT_RGBA,
+                       codec_ctx->width, codec_ctx->height);
+        //YUV->RGBA_8888
+        I420ToARGB(yuv_frame->data[0], yuv_frame->linesize[0],
+                   yuv_frame->data[2], yuv_frame->linesize[2],
+                   yuv_frame->data[1], yuv_frame->linesize[1],
+                   rgb_frame->data[0], rgb_frame->linesize[0],
+                   codec_ctx->width, codec_ctx->height);
+
+        //unlock
+        ANativeWindow_unlockAndPost(pPlayer->nativeWindow);
+        usleep(1000 * 16);
+    }
+}
+
+/**
+ * 解码子线程函数
+ */
+void *decode_data(void *arg) {
+    struct Player *player = (struct Player *) arg;
+    AVFormatContext *input_format_ctx = player->input_format_ctx;
+
+    //准备读取
+    //AVPacket用于存储一帧一帧的压缩数据（H264）
+    //缓冲区，开辟空间
+    AVPacket *packet = (AVPacket *) av_malloc(sizeof(AVPacket));
+
+    int video_frame_count = 0;
+    // 6 . 一帧一帧的读取压缩数据
+    while (av_read_frame(input_format_ctx, packet) >= 0) {
+
+        //只要视频压缩数据（根据流的索引位置判断）
+        if (packet->stream_index == player->video_stream_index) {
+            decode_video(player, packet);
+            LOGI("video_frame_count:%d", video_frame_count++);
+        }
+        //释放资源
+        av_free_packet(packet);
+    }
+}
+
+
+JNIEXPORT void JNICALL
 Java_jbox2d_example_com_ffmpeg_1demo_utils_VideoUtils_play(JNIEnv *env, jobject instance,
-                                                           jstring input_jstr, jobject surface) {
+                                                           jstring input_jstr,
+                                                           jobject surface) {
     //需要转码的视频文件(输入的视频文件)
     const char *input_cstr = (*env)->GetStringUTFChars(env, input_jstr, NULL);
 
@@ -141,117 +228,19 @@ Java_jbox2d_example_com_ffmpeg_1demo_utils_VideoUtils_play(JNIEnv *env, jobject 
     //  输出打印信息
     log_video_audio_info(player);
 
+    decode_video_prepare(env, player, surface);
 
-    //准备读取
-    //AVPacket用于存储一帧一帧的压缩数据（H264）
-    //缓冲区，开辟空间
-   /* AVPacket *packet = (AVPacket *) av_malloc(sizeof(AVPacket));
+    //创建子线程解码
+    pthread_create(player->decode_threads[player->video_stream_index], NULL, decode_data,
+                   (void *) player);
 
-    //AVFrame用于存储解码后的像素数据(YUV)
-    //内存分配
-    AVFrame *pFrame = av_frame_alloc();
-    // 后面的数据读取之后，解码之后需要转换格式，YUV-RGBA
-    // 渲染部分
-    AVFrame *pFrame_RGBA = av_frame_alloc();
-    if (pFrame_RGBA == NULL || pFrame == NULL) {
-        LOGE("Could not allocate video frame.");
-        return;
-    }
-
-    // native绘制
-    ANativeWindow *nativeWindow = ANativeWindow_fromSurface(env, surface);
-
-    // 获取视频宽高
-    int videoWidth = codec_ctxCtx->width;
-    int videoHeight = codec_ctxCtx->height;
-
-    // 设置native window的buffer大小,可自动拉伸
-    ANativeWindow_setBuffersGeometry(nativeWindow, videoWidth, videoHeight,
-                                     WINDOW_FORMAT_RGBA_8888);
-    // 贞的缓冲区与其一致，操作缓冲区域就ok了
-    ANativeWindow_Buffer outBuffer;
-
-
-
-    // buffer 中的数据就是用于渲染的，且格式为RGBA
-    //    int numBytes = av_image_get_buffer_size(AV_PIX_FMT_RGBA, codec_ctxCtx->width, codec_ctxCtx->height, 1);
-    //    uint8_t *buffer = (uint8_t *) av_malloc(numBytes * sizeof(uint8_t));
-
-    // 由于解码出来的帧格式不是RGBA的,在渲染之前需要进行格式转换
-    *//*struct SwsContext *swsContext=sws_getContext(codec_ctxCtx->width,
-                                                 codec_ctxCtx->height,
-                                                 codec_ctxCtx->pix_fmt,
-                                                 codec_ctxCtx->width,
-                                                 codec_ctxCtx->height,
-                                                 AV_PIX_FMT_RGBA,
-                                                 SWS_BILINEAR,
-                                                 NULL,
-                                                 NULL,
-                                                 NULL);*//*
-
-
-    // argus
-    int got_picture, ret, frameCount = 0;
-
-    // 6 . 一帧一帧的读取压缩数据
-    while (av_read_frame(input_format_ctx, packet) >= 0) {
-
-        //只要视频压缩数据（根据流的索引位置判断）
-        if (packet->stream_index == v_stream_idx) {
-
-            //7.解码一帧视频压缩数据，得到视频像素数据
-            ret = avcodec_decode_video2(codec_ctxCtx, pFrame, &got_picture, packet);
-            if (ret < 0) {
-                LOGE("%s", "解码错误");
-                return;
-            }
-            // 为0说明解码完成，非0正在解码
-            if (got_picture) {
-                LOGI("%s", frameCount++);
-
-                *//**
-                * 1.lock window
-                * 2. 缓冲器赋值
-                * 3.unlock window
-                *//*
-                // lock
-                ANativeWindow_lock(nativeWindow, &outBuffer, 0);
-
-                //pFrame_RGBA 设置其属性（像素格式，宽高）和缓冲区
-                avpicture_fill((AVPicture *) pFrame_RGBA, outBuffer.bits, AV_PIX_FMT_RGBA,
-                               codec_ctxCtx->width, codec_ctxCtx->height);
-
-                // fix buffer  格式转换
-                *//*     sws_scale(swsContext,(uint8_t const *const *)pFrame->data,
-                               pFrame->linesize,0,codec_ctxCtx->height,
-                               pFrame_RGBA->data,pFrame_RGBA->linesize);*//*
-
-                //设置rgb_frame的属性（像素格式、宽高）和缓冲区
-                //rgb_frame缓冲区与outBuffer.bits是同一块内存
-                //  https://chromium.googlesource.com/external/libyuv
-                I420ToARGB(pFrame->data[0], pFrame->linesize[0],
-                           pFrame->data[2], pFrame->linesize[2],
-                           pFrame->data[1], pFrame->linesize[1],
-                           pFrame_RGBA->data[0], pFrame_RGBA->linesize[0],
-                           codec_ctxCtx->width, codec_ctxCtx->height);
-
-                //unlock  绘制上去了
-                ANativeWindow_unlockAndPost(nativeWindow);
-                usleep(1000 * 16);  // 不能一直播放，还是需要休眠的，防止频率太高
-            }
-        }
-        //释放资源
-        av_free_packet(packet);
-        //        av_packet_unref(&packet);
-    }
-
-    ANativeWindow_release(nativeWindow);
-
-    av_frame_free(&pFrame);// 释放内存
-    avcodec_close(codec_ctxCtx);
-    avformat_close_input(input_format_ctx);
-    avformat_free_context(input_format_ctx);
-
+    // 还未释放资源
+    /* ANativeWindow_release(nativeWindow);
+     av_frame_free(&pFrame);// 释放内存
+     avcodec_close(codec_ctxCtx);
+     avformat_close_input(input_format_ctx);
+     avformat_free_context(input_format_ctx);
+     */
     (*env)->ReleaseStringUTFChars(env, input_jstr, input_cstr);
-    free(player);*/
+    free(player);
 }
