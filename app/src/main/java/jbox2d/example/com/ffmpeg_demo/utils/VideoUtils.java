@@ -20,6 +20,9 @@ public class VideoUtils {
     //音频播放
     public native void audioPlayer(String input );
 
+    //音视频同步播放
+    public native void play(String input , Surface surface);
+
 
     static {
         System.loadLibrary("libavcodec-56");

@@ -1,0 +1,8 @@
+
+
+NDK排查错误
+1.保存logcat文件，分析日志
+2.ndk-stack工具
+adb logcat | ndk-stack -sym J:/mars-jee/dn_ffmpeg_player/obj/local/armeabi/
+3.addr2line定位错误行
+arm-linux-androideabi-addr2line -e J:/mars-jee/dn_ffmpeg_player/obj/local/armeabi/libmyffmpeg.so 0x580001d

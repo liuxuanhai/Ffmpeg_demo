@@ -71,7 +71,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 audioPlayer(v);
                 break;
             case R.id.btn_play:
-
+                startActivity(new Intent(this, VideoPlayActivity.class));
                 break;
             case R.id.btn_transcoding_compress:
 
