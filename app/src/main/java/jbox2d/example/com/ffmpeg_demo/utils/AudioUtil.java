@@ -63,6 +63,11 @@ public class AudioUtil {
                 audioFormat,
                 bufferSizeInBytes, AudioTrack.MODE_STREAM
         );
+
+        //播放
+        //audioTrack.play();
+        //写入PCM
+        //audioTrack.write(audioData, offsetInBytes, sizeInBytes);
         return audioTrack;
     }
 }
