@@ -22,6 +22,7 @@
 #include "include/libavutil/imgutils.h"
 #include "include/libswresample/swresample.h"
 #include "include/libavutil/channel_layout.h"
+#include "queue.h"
 
 #define LOGI(FORMAT, ...) __android_log_print(ANDROID_LOG_INFO,"FFmpeg",FORMAT,##__VA_ARGS__);
 #define LOGE(FORMAT, ...) __android_log_print(ANDROID_LOG_ERROR,"FFmpeg",FORMAT,##__VA_ARGS__);
@@ -31,6 +32,10 @@
 
 //音频解码 采样率 新版版可达48000 * 4 (32位pcm数据)
 #define MAX_AUDIO_FRME_SIZE   48000 * 4
+
+
+
+
 
 
 struct Player {
