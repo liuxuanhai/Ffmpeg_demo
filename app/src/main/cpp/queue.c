@@ -32,7 +32,7 @@ struct _Queue {
 /**
  * 初始化队列
  */
-Queue *queue_init(int size) {
+Queue *queue_init(int size,queue_full_func full_func) {
     Queue *queue = malloc(sizeof(Queue));
     queue->size = size;
     queue->next_to_read = 0;
@@ -41,7 +41,8 @@ Queue *queue_init(int size) {
     queue->tab = malloc(sizeof(*queue->tab) * size);
     // 数组元素指定大小
     for (int i = 0; i < size; ++i) {
-        queue->tab[i] = malloc(sizeof(*queue->tab));
+//        queue->tab[i] = malloc(sizeof(*queue->tab));
+        queue->tab[i] = full_func;
     }
     return queue;
 };
@@ -49,9 +50,11 @@ Queue *queue_init(int size) {
 /**
  * 销毁队列
  */
-void queue_free(Queue *queue) {
+void queue_free(Queue *queue, queue_free_func free_func) {
     for (int i = 0; i < queue->size; ++i) {
-        free(queue->tab[i]);
+        //销毁队列的元素，通过使用回调函数,具体的释放avpacket
+        free_func((void *) queue->tab[i]);
+//        free(queue->tab[i]);
     }
     free(queue->tab);
     free(queue);
@@ -72,6 +75,7 @@ int queue_get_next(const Queue *queue, int current) {
 void *queue_push(Queue *queue) {
     int current = queue->next_to_write;
     queue->next_to_write = queue_get_next(queue, current);
+//    LOGI("queue_push queue:%#x, %d",queue,current);
     return queue->tab[current];
 }
 
@@ -82,6 +86,7 @@ void *queue_push(Queue *queue) {
 void *queue_pop(Queue *queue) {
     int current = queue->next_to_read;
     queue->next_to_read = queue_get_next(queue, current);
+//    LOGI("queue_pop queue:%#x, %d",queue,current);
     return queue->tab[current];
 }
 

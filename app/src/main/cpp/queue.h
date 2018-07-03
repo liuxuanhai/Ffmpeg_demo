@@ -7,18 +7,28 @@
 
 #endif //FFMPEG_DEMO_QUEUE_H
 
+#include <android/log.h>
+#define LOGI(FORMAT,...) __android_log_print(ANDROID_LOG_INFO,"ycl",FORMAT,##__VA_ARGS__);
+#define LOGE(FORMAT,...) __android_log_print(ANDROID_LOG_ERROR,"ycl",FORMAT,##__VA_ARGS__);
+
 
 typedef struct _Queue Queue;
+
+//分配队列元素内存的函数
+typedef void *(*queue_full_func)();
+//释放队列中元素所占用的内存  -- 定义函数
+typedef void *(*queue_free_func)(void *elem);
 
 /**
  * 初始化队列
  */
-Queue *queue_init(int size);
+Queue *queue_init(int size,queue_full_func full_func);
 
 /**
  * 销毁队列
  */
-void queue_free(Queue *queue);
+void queue_free(Queue *queue, queue_free_func free_func);
+
 /**
  * 获取下一个索引位置
  */
