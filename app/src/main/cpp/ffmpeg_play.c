@@ -23,6 +23,7 @@
 #include "include/libavutil/imgutils.h"
 #include "include/libswresample/swresample.h"
 #include "include/libavutil/channel_layout.h"
+#include "include/libavutil/time.h"
 
 #define LOGI(FORMAT, ...) __android_log_print(ANDROID_LOG_INFO,"FFmpeg",FORMAT,##__VA_ARGS__);
 #define LOGE(FORMAT, ...) __android_log_print(ANDROID_LOG_ERROR,"FFmpeg",FORMAT,##__VA_ARGS__);
@@ -35,6 +36,9 @@
 
 #define PACKET_QUEUE_SIZE 50
 
+
+#define MIN_SLEEP_TIME_US 1000ll
+#define AUDIO_TIME_ADJUST_US -200000ll
 
 typedef struct _Player {
     JavaVM *javaVM;
@@ -81,7 +85,9 @@ typedef struct _Player {
     // 条件变量
     pthread_cond_t cond;
 
-
+    //视频开始播放的时间
+    int64_t start_time;
+    int64_t audio_clock;
 
 } Player;
 
@@ -177,6 +183,66 @@ void decode_video_prepare(JNIEnv *env, Player *pPlayer, jobject surface) {
     pPlayer->nativeWindow = ANativeWindow_fromSurface(env, surface);
 }
 
+// ---------------------- 同步时间延迟函数 start ------------------------
+/**
+ * 获取视频当前播放时间
+ */
+int64_t player_get_current_video_time(Player *player) {
+    int64_t current_time = av_gettime();
+    return current_time - player->start_time;
+}
+
+/**
+ * 延迟
+ */
+void player_wait_for_frame(Player *player, int64_t stream_time, int stream_no) {
+    pthread_mutex_lock(&player->mutex);
+    for (;;) {
+        int64_t current_video_time = player_get_current_video_time(player);
+        int64_t sleep_time = stream_time - current_video_time;
+        if (sleep_time < -300000ll) {
+            // 300 ms late
+            int64_t new_value = player->start_time - sleep_time;
+            LOGI("player_wait_for_frame[%d] correcting %f to %f because late",
+                 stream_no, (av_gettime() - player->start_time) / 1000000.0,
+                 (av_gettime() - new_value) / 1000000.0);
+
+            player->start_time = new_value;
+            pthread_cond_broadcast(&player->cond);
+        }
+
+        if (sleep_time <= MIN_SLEEP_TIME_US) {
+            // We do not need to wait if time is slower then minimal sleep time
+            break;
+        }
+
+        if (sleep_time > 500000ll) {
+            // if sleep time is bigger then 500ms just sleep this 500ms
+            // and check everything again
+            sleep_time = 500000ll;
+        }
+        //等待指定时长
+        int timeout_ret = pthread_cond_timeout_np(&player->cond,
+                                                  &player->mutex, sleep_time / 1000ll);
+
+        // just go further
+        LOGI("player_wait_for_frame[%d] finish", stream_no);
+    }
+    pthread_mutex_unlock(&player->mutex);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+// ---------------------- 同步时间延迟函数 end ------------------------
 /**
  * 解码视频
  */
@@ -188,6 +254,15 @@ void decode_video(Player *pPlayer, AVPacket *pPacket) {
         LOGE("Could not allocate video frame.");
         return;
     }
+
+    AVFormatContext *input_format_ctx = pPlayer->input_format_ctx;
+    AVStream *stream = input_format_ctx->streams[pPlayer->video_stream_index];
+
+/*  test
+ * yuv_frame->pts;
+    yuv_frame->pkt_dts;
+    stream->duration;
+    stream->time_base;*/
 
     AVCodecContext *codec_ctx = pPlayer->input_codec_ctx[pPlayer->video_stream_index];
     ANativeWindow_Buffer outBuffer;
@@ -220,9 +295,20 @@ void decode_video(Player *pPlayer, AVPacket *pPacket) {
                    rgb_frame->data[0], rgb_frame->linesize[0],
                    codec_ctx->width, codec_ctx->height);
 
+
+        // 视频延迟处理  start 如下：
+
+        // 计算延迟
+        int64_t pts = av_frame_get_best_effort_timestamp(yuv_frame);
+        // 转换（不同时间基时间转换）
+        int64_t time = av_rescale_q(pts, stream->time_base, AV_TIME_BASE_Q);
+
+        // 控制当前这一帧的是否延迟，及延迟多少
+        player_wait_for_frame(pPlayer, time, pPlayer->video_stream_index);
+
+
         //unlock
         ANativeWindow_unlockAndPost(pPlayer->nativeWindow);
-        usleep(1000 * 16);
     }
 
 //    ANativeWindow_release(nativeWindow);
@@ -302,6 +388,10 @@ void decode_audio_prepare(Player *pPlayer) {
  * 解码音频
  */
 void decode_audio(Player *pPlayer, AVPacket *pPacket) {
+    AVFormatContext *input_format_ctx = pPlayer->input_format_ctx;
+    AVStream *stream = input_format_ctx->streams[pPlayer->audio_stream_index];
+
+
     AVCodecContext *codec_ctx = pPlayer->input_codec_ctx[pPlayer->audio_stream_index];
 
     //解压缩数据
@@ -324,11 +414,20 @@ void decode_audio(Player *pPlayer, AVPacket *pPacket) {
         int out_buffer_size = av_samples_get_buffer_size(NULL,
                                                          pPlayer->out_channel_nb, frame->nb_samples,
                                                          pPlayer->out_sample_fmt, 1);
+        int64_t pts = pPacket->pts;
+        if (pts != AV_NOPTS_VALUE) {
+            pPlayer->audio_clock = av_rescale_q(pts, stream->time_base, AV_TIME_BASE_Q);
+            // av_q2d(stream->time_base) * pts;
+            LOGI("player_write_audio - read from pts");
+            player_wait_for_frame(pPlayer,
+                                  pPlayer->audio_clock + AUDIO_TIME_ADJUST_US,
+                                  pPlayer->audio_stream_index);
+        }
+
         // 关联当前线程的JNIenv
         JavaVM *javaVM = pPlayer->javaVM;
         JNIEnv *env;
         (*javaVM)->AttachCurrentThread(javaVM, &env, NULL);
-
 
         // out_buffer缓冲区的数据，转换成bute数组
         jbyteArray audio_sample_array = (*env)->NewByteArray(env, out_buffer_size);
@@ -340,13 +439,12 @@ void decode_audio(Player *pPlayer, AVPacket *pPacket) {
         (*env)->CallIntMethod(env, pPlayer->audio_track, pPlayer->audio_track_write_mid,
                               audio_sample_array,
                               0, out_buffer_size);
-        //释放引用
+        //释放局部引用
         (*env)->DeleteLocalRef(env, audio_sample_array);
 //        (*env)->DeleteGlobalRef(env,  pPlayer->audio_track);
 
         (*javaVM)->DetachCurrentThread(javaVM);
-
-        usleep(1000 * 16); //16ms
+        usleep(1000 * 16);
     }
     av_frame_free(&frame);
 //    av_free(out_buffer);
@@ -374,7 +472,9 @@ void *decode_data(void *arg) {
     // 6 . 一帧一帧的读取压缩数据
     for (;;) {
         //消费AVPacket
-        Queue *packet = queue_pop(queue,&player->mutex,&player->cond);
+        pthread_mutex_lock(&player->mutex);
+        AVPacket *packet = queue_pop(queue, &player->mutex, &player->cond);
+        pthread_mutex_unlock(&player->mutex);
 
         //只要视频压缩数据（根据流的索引位置判断）
         if (stream_index == player->video_stream_index) {
@@ -433,13 +533,16 @@ void *player_read_from_stream(void *arg) {
     while (av_read_frame(player->input_format_ctx, pkt) >= 0) {
         //根据AVpacket->stream_index获取对应的队列
         Queue *queue = player->packets[pkt->stream_index];
+
+        // 堵塞的地方需要加锁
+        pthread_mutex_lock(&player->mutex);
         //将AVPacket压入队列
-        AVPacket *packet_data = queue_pop(queue,&player->mutex,&player->cond);
-//        packet_data = pkt; // 赋值
-
-
+        AVPacket *packet_data = queue_push(queue, &player->mutex, &player->cond);
+//        packet_data = pkt; // 此处赋值有误
         //拷贝（间接赋值，拷贝结构体数据）
         *packet_data = packet;
+
+        pthread_mutex_unlock(&player->mutex);
 
         //示范队列内存释放
 //        queue_free(queue, pack_free_func);

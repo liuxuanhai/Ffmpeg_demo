@@ -64,7 +64,6 @@ void queue_free(Queue *queue, queue_free_func free_func) {
  * 获取下一个索引位置
  */
 int queue_get_next(const Queue *queue, int current) {
-
     return (current + 1) % queue->size;
 };
 
@@ -103,7 +102,7 @@ void *queue_pop(Queue *queue,pthread_mutex_t *mutex,pthread_cond_t *cond) {
             break;
         }
         // 阻塞
-        pthread_cond_wait( cond,mutex);
+        pthread_cond_wait(cond,mutex);
     }
     queue->next_to_read = queue_get_next(queue, current);
     LOGI("queue_pop queue:%#x, %d",queue,current);

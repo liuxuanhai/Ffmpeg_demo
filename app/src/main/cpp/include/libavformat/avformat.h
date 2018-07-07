@@ -309,6 +309,7 @@
 
 #include "avio.h"
 #include "libavformat/version.h"
+#include "../libavutil/rational.h"
 
 struct AVFormatContext;
 
