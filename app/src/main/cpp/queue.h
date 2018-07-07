@@ -6,7 +6,7 @@
 #define FFMPEG_DEMO_QUEUE_H
 
 #endif //FFMPEG_DEMO_QUEUE_H
-
+#include <pthread.h>
 #include <android/log.h>
 #define LOGI(FORMAT,...) __android_log_print(ANDROID_LOG_INFO,"ycl",FORMAT,##__VA_ARGS__);
 #define LOGE(FORMAT,...) __android_log_print(ANDROID_LOG_ERROR,"ycl",FORMAT,##__VA_ARGS__);
@@ -37,10 +37,10 @@ int queue_get_next(const Queue *queue, int current);
 /**
  * 队列压入元素
  */
-void *queue_push(Queue *queue);
+void *queue_push(Queue *queue,pthread_mutex_t *mutex,pthread_cond_t *cond) ;
 
 
 /**
  * 弹出元素
  */
-void *queue_pop(Queue *queue);
+void *queue_pop(Queue *queue,pthread_mutex_t *mutex,pthread_cond_t *cond);

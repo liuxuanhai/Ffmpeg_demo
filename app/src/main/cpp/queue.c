@@ -72,10 +72,23 @@ int queue_get_next(const Queue *queue, int current) {
  * 队列压入元素
  * 返回下一个压入位置
  */
-void *queue_push(Queue *queue) {
+void *queue_push(Queue *queue,pthread_mutex_t *mutex,pthread_cond_t *cond) {
     int current = queue->next_to_write;
-    queue->next_to_write = queue_get_next(queue, current);
-//    LOGI("queue_push queue:%#x, %d",queue,current);
+    int next_to_write;
+    for (;;) {
+        //下一个要读的位置等于下一个要写的，等我写完，在读
+        //不等于，就继续 ,可能只执行一次就break了
+        next_to_write=queue_get_next(queue, current);
+        if (next_to_write != queue->next_to_read) {
+            break;
+        }
+        // 阻塞
+        pthread_cond_wait( cond,mutex);
+    }
+    queue->next_to_write = next_to_write;
+    LOGI("queue_push queue:%#x, %d",queue,current);
+    //通知
+    pthread_cond_broadcast(cond);
     return queue->tab[current];
 }
 
@@ -83,10 +96,20 @@ void *queue_push(Queue *queue) {
 /**
  * 弹出元素
  */
-void *queue_pop(Queue *queue) {
+void *queue_pop(Queue *queue,pthread_mutex_t *mutex,pthread_cond_t *cond) {
     int current = queue->next_to_read;
+    for (;;) {
+        if (queue->next_to_read != queue->next_to_write) {
+            break;
+        }
+        // 阻塞
+        pthread_cond_wait( cond,mutex);
+    }
     queue->next_to_read = queue_get_next(queue, current);
-//    LOGI("queue_pop queue:%#x, %d",queue,current);
+    LOGI("queue_pop queue:%#x, %d",queue,current);
+    //通知
+    pthread_cond_broadcast(cond);
+
     return queue->tab[current];
 }
 

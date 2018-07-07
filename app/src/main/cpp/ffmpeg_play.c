@@ -75,6 +75,14 @@ typedef struct _Player {
     //音频，视频队列数组
     Queue *packets[MAX_STREAM];
     // ----------  thread end  ---------
+
+    // 互斥锁
+    pthread_mutex_t mutex;
+    // 条件变量
+    pthread_cond_t cond;
+
+
+
 } Player;
 
 //解码数据
@@ -366,7 +374,7 @@ void *decode_data(void *arg) {
     // 6 . 一帧一帧的读取压缩数据
     for (;;) {
         //消费AVPacket
-        Queue *packet = queue_pop(queue);
+        Queue *packet = queue_pop(queue,&player->mutex,&player->cond);
 
         //只要视频压缩数据（根据流的索引位置判断）
         if (stream_index == player->video_stream_index) {
@@ -426,7 +434,7 @@ void *player_read_from_stream(void *arg) {
         //根据AVpacket->stream_index获取对应的队列
         Queue *queue = player->packets[pkt->stream_index];
         //将AVPacket压入队列
-        AVPacket *packet_data = queue_pop(queue);
+        AVPacket *packet_data = queue_pop(queue,&player->mutex,&player->cond);
 //        packet_data = pkt; // 赋值
 
 
@@ -471,7 +479,11 @@ Java_jbox2d_example_com_ffmpeg_1demo_utils_VideoUtils_play(JNIEnv *env, jobject 
     decode_video_prepare(env, player, surface);
     decode_audio_prepare(player);
     jni_audio_prepare(env, jobj, player);
+    player_alloc_queues(player);
 
+
+    pthread_mutex_init(&player->mutex, NULL);
+    pthread_cond_init(&player->cond, NULL);
 
     // 生产者线程
     pthread_create(&(player->thread_read_from_stream),
@@ -495,6 +507,9 @@ Java_jbox2d_example_com_ffmpeg_1demo_utils_VideoUtils_play(JNIEnv *env, jobject 
                    decode_data,
                    (void *) decoder_data2);
 
+
+//    pthread_mutex_destroy(&player->mutex);
+//    pthread_cond_destroy(&player->cond);
 
 //    (*env)->ReleaseStringUTFChars(env, input_jstr, input_cstr);
 //    free(player);
