@@ -1,0 +1,105 @@
+ffprobe
+	文件信息：ffprobe xxx
+	输出格式信息：ffprobe -show_format  xxx.mp4
+	每个流的具体信息（以JSON格式）：ffprobe -print_format json  -show_streams xxx.mp4
+	显示帧信息：ffprobe -show_frames xxx.mp4
+	查看包信息：ffprobe -show_packets xxx.mp4
+ffplay
+	ffplay [选项] ['输入文件']
+	1. 主要选项
+		'-x width'        强制以 "width" 宽度显示
+		'-y height'       强制以 "height" 高度显示
+		'-an'             禁止音频
+		'-vn'             禁止视频
+		'-ss pos'         跳转到指定的位置(秒)
+		'-t duration'     播放 "duration" 秒音/视频
+		'-bytes'          按字节跳转
+		'-nodisp'         禁止图像显示(只输出音频)
+		'-f fmt'          强制使用 "fmt" 格式
+		'-window_title title'  设置窗口标题(默认为输入文件名)
+		'-loop number'    循环播放 "number" 次(0将一直循环)
+		'-showmode mode'  设置显示模式
+		可选的 mode ：
+		'0, video'    显示视频
+		'1, waves'    显示音频波形
+		'2, rdft'     显示音频频带
+		默认值为 'video'，你可以在播放进行时，按 "w" 键在这几种模式间切换
+		'-i input_file'   指定输入文件
+	2. 一些高级选项
+		'-sync type'          设置主时钟为音频、视频、或者外部。默认为音频。主时钟用来进行音视频同步
+		'-threads count'      设置线程个数
+		'-autoexit'           播放完成后自动退出
+		'-exitonkeydown'      任意键按下时退出
+		'-exitonmousedown'    任意鼠标按键按下时退出
+		'-acodec codec_name'  强制指定音频解码器为 "codec_name"
+		'-vcodec codec_name'  强制指定视频解码器为 "codec_name"
+		'-scodec codec_name'  强制指定字幕解码器为 "codec_name"
+	3. 一些快捷键
+		'q, ESC'            退出
+		'f'                 全屏
+		'p, SPC'            暂停
+		'w'                 切换显示模式(视频/音频波形/音频频带)
+		's'                 步进到下一帧
+		'left/right'        快退/快进 10 秒
+		'down/up'           快退/快进 1 分钟
+		'page down/page up' 跳转到前一章/下一章(如果没有章节，快退/快进 10 分钟)
+		'mouse click'       跳转到鼠标点击的位置(根据鼠标在显示窗口点击的位置计算百分比)
+	播放文件：ffplay xxx
+
+	音视频同步原理：
+		播放器接收到的视频帧或者音频帧，内部都是会有时间戳（PTS时钟）来标识它实际应该在什么时刻展示，实际的对齐策略如下：比较视频当前的播放时间和音频当前的播放时间，如果视频播放过快，则通过加大延迟或者重复播放来降低视频播放速度，如果视频播放满了，则通过减小延迟或者丢帧来追赶音频播放的时间点。关键就在于音视频时间的比较和延迟的计算，当前在比较的过程中会设置一个阈值，如果超过预设的阈值就应该作出调整（丢帧或者重复渲染），这就是整个对齐策略
+	命令：
+		使用以音频为基准进行音视频同步：ffplay pm.mp4 -sync audio
+		使用以视频为基准进行音视频同步：ffplay pm.mp4 -sync video
+		使用外部时钟为基准进行音视频同步：ffplay pm.mp4 -sync ext
+ffmpeg
+	1. 通用参数
+		-f fmt ： 指定格式
+		-i filename：指定输入文件名
+		-y：覆盖已有文件
+		-t duration：指定时长
+		-fs limit_size：设置文件大小的上限
+		-ss time_off： 从指定的时间开始
+		-re：代表按照真绿发送，尤其在作为推流工具的时候一定要加上该参数，否则ffpmeg会按照最高速率向流媒体不停的发送数据。
+		-map：指定输出文件的流映射关系。例如：“-map 1:0 -map 1:1”要求按照第二个输入的文件的第一个流和第二个流写入输出文件。如果没有设置此项，则ffpmeg采用默认的映射关系。
+	2. 视频参数
+		-b：指定比特率（bit/s），ffmpeg默认采用的是VBR的，若指定的该参数，则使用平均比特率。
+		-bitexact：使用标准比特率。
+		-vb：指定视频比特率（bit/s）
+		-r rate：帧速率（fps）
+		-s size：指定分辨率（320x240）
+		-aspect aspect：设置视频长宽比（4:3、16:9或1.33333、1.77777）
+		-croptop size：设置顶部切除尺寸（in pixels）
+		-cropleft size：设置左切除尺寸（in pixels）
+		-cropbottom size：设置地步切除尺寸（in pixels）
+		-cropright size：设置右切除尺寸（in pixels）
+		-padtop size：设置顶部补齐尺寸（in pixels）
+		-padleft size：设置左补齐尺寸（in pixels）
+		-padbottom size：设置地步补齐尺寸（in pixels）
+		-padright size：设置右补齐尺寸（in pixels）
+		-padcolor color：设置补齐颜色
+		-vn：取消视频的输出
+		-vcodec codec：强制使用codec编码方式
+	3. 音频参数
+		-ab：设置比特率（bit/s），对于MP3的格式，想要听到较高品质的声音，建议设置160Kbit/s（单声道80Kbit/s）以上。
+		-aq quality：设置音频质量
+		-ar ratre：设置音频采样率（Hz）
+		-ac channels：设置声道数，1就是单声道，2就是立体声
+		-an：取消音频输出
+		-acodec codec：强制使用codec编码方式
+		-vol volume：设置录制音量大小
+
+	其他命令:
+		视频裁剪： ffmpeg -i pm.mp4 -ss 00:00:50.0 -codec copy -t 20 output.mp4（会导致裁剪时间不准确，开头黑屏等）
+		优化后的视频裁剪：ffmpeg -ss 10 -t 15 -accurate_seek -i pm.mp4 -codec copy output.mp4 （裁剪开始时间未生效）
+		提取一个视频文件中的音频，并保存为文件：ffmpeg -i pm.mp4 -vn -acodec copy output.m4a
+		将视频中的音频静音，只保留视频：ffmpeg -i pm.mp4 -an -vcodec copy output.mp4
+		将一段视频推送到流媒体服务器上：ffmpeg -re -i pm.mp4 -acodec copy -vcodec copy -f flv rtmp://127.0.0.1/rh/mylive
+		将流媒体服务器上的流dump到本地：ffmpeg -i rtmp://127.0.0.1/rh/mylive -acodec copy -vcodec copy -f flv test.flv
+
+		
+	
+
+
+
+		

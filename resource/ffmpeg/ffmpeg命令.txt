@@ -1,0 +1,86 @@
+提取单独的音频： ffmpeg -i input.avi -acodec copy -vn -y output.avi
+提取单独的视频： ffmpeg -i input.avi -vcodec copy -an -y output.avi
+
+视频解复用
+ffmpeg –i test.mp4 –vcodec copy –an –f m4v test.264
+ffmpeg –i test.avi –vcodec copy –an –f m4v test.264
+
+视频转码
+ffmpeg –i test.mp4 –vcodec h264 –s 352*278 –an –f m4v test.264              //转码为码流原始文件
+ffmpeg –i test.mp4 –vcodec h264 –bf 0 –g 25 –s 352*278 –an –f m4v test.264  //转码为码流原始文件
+ffmpeg –i test.avi -vcodec mpeg4 –vtag xvid –qsame test_xvid.avi            //转码为封装文件
+//-bf B帧数目控制，-g 关键帧间隔控制，-s 分辨率控制
+
+视频合成（剪辑之后的视频）：
+ffmpeg -f concat -safe 0 -i inout.avi -c copy output.avi
+
+视频封装：
+ffmpeg –i video_file –i audio_file –vcodec copy –acodec copy output_file
+
+视频剪切：
+ffmpeg -i test.avi -r 1 -f image2 image-%3d.jpeg  // 提取图像
+ffmpeg -i input.avi -ss 0:0:0 -t 0:0:0 -vcodec copy -acodec copy output.avi -y  // 剪切视频
+// -r 提取图像的频率 -ss 开始时间 -t 持续时间
+
+视频录制：
+ffmpeg –i rtsp://192.168.3.205:5555/test –vcodec copy out.avi
+
+YUV序列播放：
+ffplay -f rawvideo -video_size 1920x1080 input.yuv
+
+YUV序列转AVI
+ffmpeg –s w*h –pix_fmt yuv420p –i input.yuv –vcodec mpeg4 output.avi
+
+
+注：
+-h 帮助
+-i filename	输入文件
+-f 设置输出格式
+-t duration	设置处理时间，hh:mm:ss
+-y 直接覆盖
+-ss position 设置起始时间，格式hh:mm:ss
+-b:v bitrate 设置视频码率
+-b:a bitrate 设置音频码率
+-r fps  设置帧率
+-s wxh 设置帧大小，格式352x760
+-c:v codec 设置视频编码器
+-c:a codec 设置音频编码器
+-vpre slow ？？？
+-vpre baseline ？？？
+-ar freq 设置音频采样率
+-ac 设定声音的Channel数
+-vn 不处理视频
+-an 不处理音频
+-vcodec 设定视频编解码器，未设定时则使用与输入流相同的编解码器
+-acodec 设定声音编解码器，未设定时则使用与输入流相同的编解码器
+
+
+
+将文件当做直播送至live
+ffmpeg -re -i localFile.mp4 -c copy -f flv rtmp://server/live/streamName
+
+将直播媒体保存至本地文件
+ffmpeg -i rtmp://server/live/streamName -c copy dump.flv
+
+将其中一个直播流，视频改用h264压缩，音频不变，送至另外一个直播服务流
+ffmpeg -i rtmp://server/live/originalStream -c:a copy -c:v libx264 -vpre slow -f flv rtmp://server/live/h264Stream
+
+将其中一个直播流，视频改用h264压缩，音频改用faac压缩，送至另外一个直播服务流
+ffmpeg -i rtmp://server/live/originalStream -c:a libfaac -ar 44100 -ab 48k -c:v libx264 -vpre slow -vpre baseline -f flv rtmp://server/live/h264Stream
+
+将一个高清流，复制为几个不同视频清晰度的流重新发布，其中音频不变（500,300,150,48K）
+ffmpeg -re -i rtmp://server/live/high_FMLE_stream -acodec copy -vcodec x264lib -s 640×360 -b 500k -vpre medium -vpre baseline rtmp://server/live/baseline_500k -acodec copy -vcodec x264lib -s 480×272 -b 300k -vpre medium -vpre baseline rtmp://server/live/baseline_300k -acodec copy -vcodec x264lib -s 320×200 -b 150k -vpre medium -vpre baseline rtmp://server/live/baseline_150k -acodec libfaac -vn -ab 48k rtmp://server/live/audio_only_AAC_48k
+
+
+采集usb摄像头视频命令：(我们采集10秒，采集设备为vfwcap类型设备，第0个vfwcap采集设备（如果系统有多个
+vfw的视频采集设备，可以通过-i num来选择），每秒8帧，输出方式为文件，格式为mp4)
+ffmpeg -t 20 -f vfwcap -i 0 -r 8 -f mp4 cap1111.mp4
+
+最简单的抓屏：
+ffmpeg -f gdigrab -i desktop out.mpg
+
+ffmpeg从视频中生成gif图片：
+ffmpeg -i capx.mp4 -t 10 -s 320x240 -pix_fmt rgb24 jidu1.gif
+
+
+
