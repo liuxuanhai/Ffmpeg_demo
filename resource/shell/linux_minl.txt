@@ -1,4 +1,4 @@
-
+﻿
 清空命令行：reset
 
 文件操作：
@@ -108,6 +108,8 @@ echo
  12 #echo $text1
  13 #echo $text2
 
+执行上面01.sh：./01.sh
+
 命令执行退出的状态：
 0 成功
 127 没有找到命令
@@ -163,6 +165,12 @@ done
 
 输入输出重定向
 ./14.sh 1> test7 将标准输出重定向到test7文件，不再输出到屏幕上
+
+函数
+function myfun()
+{
+	echo $value
+}
 
 
 编译ffmpeg

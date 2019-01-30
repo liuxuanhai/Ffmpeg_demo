@@ -1,4 +1,4 @@
-1 Xshell配置
+﻿1 Xshell配置
 
  
 
@@ -35,17 +35,17 @@
 	
 	在最后加上 ： 
 	"在左侧行号"
-	set nu
+			set nu
     "tab 长度设置为 4"
-	set tabstop
+			set tabstop
     "覆盖文件时不备份"
-	set nobackup
+			set nobackup
     "突出显示当前行"
-	set cursorline
+			set cursorline
     "在右下角显示光标位置的状态行"
-	set ruler
+			set ruler
     "自动缩进"
-	set autoindent
+			set autoindent
 	
 	shift+zz 保存退出，over.
 
@@ -71,3 +71,44 @@
    2.4.重新启动 vsftpd 服务：
     sudo /etc/init.d/vsftpd restart
    2.5 windows 客户端输入ip 用户名和密码，连接该服务目录
+   
+   
+   
+4 dos2unix 配置
+	将DOS格式的文本文件转换成UNIX格式
+	apt-get install dos2unix
+	
+	
+5 make用来完成编译工作
+	apt-get install make
+	
+	
+6 unzip用来解压zip文件包
+	apt-get install unzip 
+	注：解压gz: tar -zxvf XXX.tar.gz
+7 安装gcc，yasm
+
+
+8 	(1)sudo 命令  
+	xzm@ubuntu:~$  sudo
+
+	这样输入当前管理员用户密码就可以得到超级用户的权限。但默认的情况下5分钟root权限就失效了。
+
+	(2)sudo -i
+	xzm@ubuntu:~$  sudo -i
+
+	通过这种方法输入当前管理员用户的密码就可以进到root用户。
+
+	(3)如果想一直使用root权限，要通过su切换到root用户。
+	那我们首先要重设置root用户的密码：
+
+	xzm@ubuntu:~$  sudo passwd root
+
+	这样就可以设置root用户的密码了。
+
+	(4)之后就可以自由的切换到root用户了
+	xzm@ubuntu:~$  su
+
+	输入root用户的密码即可。
+
+	su "king" 或者 exit回到用户权限

@@ -1,0 +1,104 @@
+1  编译ffmpeg （ubuntu16_04_4） // https://www.jianshu.com/p/9c6caa9979e3 
+	1> 搭建ndk环境 (r14b)
+		1)https://developer.android.google.cn/ndk/downloads/ 下载linux相应版本的ndkzip包
+		2)chmod 777 xxx 修改文件权限，才能上传上去
+		3)xftp上传ndk包到linux,unzip 解压包
+		4)配置环境变量，vim ~/.bashrc最后加上
+			export NDKROOT=/usr/ndk/android-ndk-r14b
+			export PATH=$NDKROOT:$PATH
+		5)更新环境变量source ~/.bashrc，查看是否成功ndk-build -v
+	2> 编译ffmpeg (fmpeg3.3.6)
+		1)http://ffmpeg.org/download.html 下载ffmpeg包 
+		2)chmod 777 xxx 修改文件权限，才能上传上去
+		3)xftp上传ndk包到linux,unzip 解压包 tar -zxvf XXX.tar.gz
+		4)修改 configure文件，否则生成.56、.5、.3等结尾的库
+			注释或删除以下语句
+			SLIBNAME_WITH_MAJOR='$(SLIBNAME).$(LIBMAJOR)'
+			LIB_INSTALL_EXTRA_CMD='$$(RANLIB) "$(LIBDIR)/$(LIBNAME)"'
+			SLIB_INSTALL_NAME='$(SLIBNAME_WITH_VERSION)'
+			SLIB_INSTALL_LINKS='$(SLIBNAME_WITH_MAJOR) $(SLIBNAME)'
+
+			同时修改成以下语句
+			SLIBNAME_WITH_MAJOR='$(SLIBPREF)$(FULLNAME)-$(LIBMAJOR)$(SLIBSUF)'
+			LIB_INSTALL_EXTRA_CMD='$$(RANLIB)"$(LIBDIR)/$(LIBNAME)"'
+			SLIB_INSTALL_NAME='$(SLIBNAME_WITH_MAJOR)'
+			SLIB_INSTALL_LINKS='$(SLIBNAME)'
+			
+			----------------------------------------------------
+			#SLIBNAME_WITH_MAJOR='$(SLIBNAME).$(LIBMAJOR)'
+			#LIB_INSTALL_EXTRA_CMD='$$(RANLIB)?"$(LIBDIR)/$(LIBNAME)"'
+			#SLIB_INSTALL_NAME='$(SLIBNAME_WITH_VERSION)'
+			#SLIB_INSTALL_LINKS='$(SLIBNAME_WITH_MAJOR)?$(SLIBNAME)’
+
+			SLIBNAME_WITH_MAJOR='$(SLIBPREF)$(FULLNAME)-$(LIBMAJOR)$(SLIBSUF)'
+			LIB_INSTALL_EXTRA_CMD='$$(RANLIB)?"$(LIBDIR)/$(LIBNAME)"'
+			SLIB_INSTALL_NAME='$(SLIBNAME_WITH_MAJOR)'
+			SLIB_INSTALL_LINKS='$(SLIBNAME)'
+
+
+	3> 编写android编译脚本
+		1)按照需要的条件编写shell编译脚本
+		2)上传到ffmpeg-3.3.9的根目录里面去
+		3)给予执行权限，chmod 777 -R build_android.sh,执行./build_android.sh
+			注：如果出现问题 bad interpreter : No such file or directory，原因：没有将文件转成Linux编码格式。
+		转换Linux编码格式有两种方式：
+			1、在Linux下创建这个文件touch build_android.sh，从Linux传出到桌面，然后把脚本命令拷入这个文件中，再重新上传到Linux；
+			2、使用 dos2unix build_android.sh 转成Linux编码格式
+		4)拿出arm/x86中以版本号结尾的8个so文件，分别放置在arm,x86文件夹里面即可
+		5)include使用arm/x86其中之一即可，可以使用x86的
+	4> 如果是编译 4.0.3 ，去掉 --disable-ffserver \
+	因为新版无法识别这个
+	
+	
+#!/bin/bash
+export NDK_HOME=/test2/ndk/android-ndk-r14b
+export PLATFORM_VERSION=android-9
+function build
+{
+	echo "start build ffmpeg for $ARCH"
+	./configure --target-os=linux \
+	--prefix=$PREFIX --arch=$ARCH \
+	--disable-doc \
+	--enable-shared \
+	--disable-static \
+	--disable-yasm \
+	--disable-asm \
+	--disable-symver \
+	--enable-gpl \
+	--disable-ffmpeg \
+	--disable-ffplay \
+	--disable-ffprobe \
+	--disable-ffserver \
+	--cross-prefix=$CROSS_COMPILE \
+	--enable-cross-compile \
+	--sysroot=$SYSROOT \
+	--enable-small \
+	--extra-cflags="-Os -fpic $ADDI_CFLAGS" \
+	--extra-ldflags="$ADDI_LDFLAGS" \
+	$ADDITIONAL_CONFIGURE_FLAG
+	make clean
+	make
+	make install
+	echo "finished build ffmpeg for $ARCH $PREFIX"
+}
+
+#arm
+ARCH=arm
+CPU=arm
+PREFIX=$(pwd)/android/$ARCH
+TOOLCHAIN=$NDK_HOME/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64
+CROSS_COMPILE=$TOOLCHAIN/bin/arm-linux-androideabi-
+ADDI_CFLAGS="-marm"
+SYSROOT=$NDK_HOME/platforms/$PLATFORM_VERSION/arch-$ARCH/
+build
+
+#x86
+ARCH=x86
+CPU=x86
+PREFIX=$(pwd)/android/$ARCH
+TOOLCHAIN=$NDK_HOME/toolchains/x86-4.9/prebuilt/linux-x86_64
+CROSS_COMPILE=$TOOLCHAIN/bin/i686-linux-android-
+ADDI_CFLAGS="-march=i686 -mtune=intel -mssse3 -mfpmath=sse -m32"
+SYSROOT=$NDK_HOME/platforms/$PLATFORM_VERSION/arch-$ARCH/
+build
+
