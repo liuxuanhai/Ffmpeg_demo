@@ -51,7 +51,7 @@ typedef struct _Player {
     // 流的总个数
     int captrue_streams_no;
     //解码器上下文数组
-    AVCodecContext *input_codec_ctx[MAX_STREAM];
+   struct AVCodecContext *input_codec_ctx[MAX_STREAM];
 
 
     // 绘制window

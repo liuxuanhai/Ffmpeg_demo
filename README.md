@@ -53,6 +53,12 @@
 	
 	
 ##  < ffmpeg >
+
+    备注： 解码视频生成文件：ffmpeg_playerToFile.c
+          解码音频：ffmpeg_voicer.c
+          解码视频并绘制到surface上面：ffmpeg_playerToSurface.c
+          解码音视频并音视频同步：ffmpeg_play.c
+
 1 . ndk环境搭建及安装，ffmpeg 编译<br>
 
 2 . IPB帧<br>

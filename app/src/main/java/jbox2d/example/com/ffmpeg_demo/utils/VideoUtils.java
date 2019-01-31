@@ -25,15 +25,14 @@ public class VideoUtils {
 
 
     static {
-        System.loadLibrary("libavcodec-56");
-        System.loadLibrary("libavdevice-56");
-        System.loadLibrary("libavfilter-5");
-        System.loadLibrary("libavformat-56");
-        System.loadLibrary("libavutil-54");
-        System.loadLibrary("libmyffmpeg");
-        System.loadLibrary("libpostproc-53");
-        System.loadLibrary("libswresample-1");
-        System.loadLibrary("libswscale-3");
-        System.loadLibrary("libyuv");
+        System.loadLibrary("avcodec-58");
+        System.loadLibrary("avdevice-58");
+        System.loadLibrary("avfilter-7");
+        System.loadLibrary("avformat-58");
+        System.loadLibrary("avutil-56");
+        System.loadLibrary("postproc-55");
+        System.loadLibrary("swresample-3");
+        System.loadLibrary("swscale-5");
+        System.loadLibrary("yuv");
     }
 }

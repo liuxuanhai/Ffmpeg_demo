@@ -27,7 +27,7 @@
 
 
 //音频解码
-extern "C"
+//extern "C"
 JNIEXPORT void JNICALL
 Java_jbox2d_example_com_ffmpeg_1demo_utils_VideoUtils_audioDecode(JNIEnv *env,
                                                                   jobject jobj,
