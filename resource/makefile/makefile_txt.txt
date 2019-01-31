@@ -1,4 +1,4 @@
-
+﻿
 Maven、ANT、Gradle构建工具
 
 Makefile 构建工具，只需通过make一句命令就可以构建一个可执行程序
@@ -22,15 +22,27 @@ main.c
 直接make，构建的是终极目标
 构建非终极目标，make main.o
 
-
+--------------------------------------------------------------------
+android.mk 文件解析：  可以在ndk里面去查询： https://developer.android.google.cn/ndk/guides/android_mk
 调用my-dir函数，返回Android.mk文件所在的目录
 LOCAL_PATH := $(call my-dir) 放在第一行，地址当前所在目录
 include file Makefile可以引入其他的Makefile文件
+
 include $(CLEAR_VARS) 编译模块时，清空LOCAL_MODULE等参数
 LOCAL_MODULE 模块名称
-LOCAL_SRC_FILES 编译需要的源文件
-LOCAL_C_INCLUDES 需要的头文件
-LOCAL_SHARED_LIBRARIES 编译需要的动态库
+LOCAL_SRC_FILES 编译需要的源文件,可以编译多个
+LOCAL_C_INCLUDES 需要的头文件，一般是+=
+LOCAL_LDLIBS := -llog -landroid  ，-l 是代表函数库，加入了log,android库
+LOCAL_SHARED_LIBRARIES 编译需要的动态库，可以有多个
+LOCAL_CPP_FEATURES := exceptions // 需要c++的异常处理，就需要开启此特性支持
+include $(BUILD_SHARED_LIBRARY)  编译的是shared库，支持static,shared
+
+列如：
+	include $(CLEAR_VARS)
+	LOCAL_MODULE := avcodec
+	LOCAL_SRC_FILES := libavcodec-56.so
+	include $(PREBUILT_SHARED_LIBRARY)
+	每次编译module的时候，清空一下module
 
 
 
