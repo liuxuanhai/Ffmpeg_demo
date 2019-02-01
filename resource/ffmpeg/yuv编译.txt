@@ -1,0 +1,5 @@
+1 . 下载地址： 
+	https://code.google.com/p/libyuv/source/checkout 或者 https://github.com/lemenkov/libyuv
+2 . 新建jni目录，将libyuv内容copy到jni里面去，在打包上传到linux,并解压
+3 . 进入jni目录，修改Android.mk文件，将目录LOCAL_MODULE := libyuv-static 修改为替换为LOCAL_MODULE := libyuv
+4 . 执行ndk-build命令，编译当前包
