@@ -1,46 +1,46 @@
-1.ÏÈÏÂÔØ°²×°  nginx ºÍ nginx-rtmp ±àÒëÒÀÀµ¹¤¾ß pcre zlib 
+1.å…ˆä¸‹è½½å®‰è£…  nginx å’Œ nginx-rtmp ç¼–è¯‘ä¾èµ–å·¥å…· pcre zlib
 sudo apt-get install build-essential libpcre3 libpcre3-dev libssl-dev
 
-	1>pcre wget https://sourceforge.net/projects/pcre/files/pcre/8.42/pcre-8.42.tar.gz£¬ÉÏ´«µ½linuxºó£¬Ö±½Ó./configure ÅäÖÃ £¬ make±àÒë ,make check ²âÊÔ£¬make install 
-	(Èç¹û±¨´íInvalid C++ compiler or C++ compiler flags £¬Ôò apt install gcc gcc++ £¬
+	1>pcre wget https://sourceforge.net/projects/pcre/files/pcre/8.42/pcre-8.42.tar.gzï¼Œä¸Šä¼ åˆ°linuxåï¼Œç›´æ¥./configure é…ç½® ï¼Œ makeç¼–è¯‘ ,make check æµ‹è¯•ï¼Œmake install
+	(å¦‚æœæŠ¥é”™Invalid C++ compiler or C++ compiler flags ï¼Œåˆ™ apt install gcc gcc++ ï¼Œ
 	apt install g++ )
-	
-	2>zlib  http://www.zlib.net/ ÏÂÔØ wget http://www.zlib.net/zlib-1.2.11.tar.gz
-	./configure ÅäÖÃ £¬ make±àÒë ,make check ²âÊÔ£¬make install 
-	3>openssl wget https://github.com/openssl/openssl/archive/OpenSSL_1_1_1a.tar.gz(¼Ç×¡ÓÃconfig²»ÒªÓÃconfigure)
-	./config  --prefix=`pwd`/libs ÅäÖÃ £¬ make±àÒë ,make check ²âÊÔ£¬make install £¬´ıËùÓĞÖ´ĞĞÍê³ÉÖ®ºó£¬·¢ÏÖlibsÀïÃæÓĞ¿â
 
-2. ´´½¨Ò»¸ö¹¤×÷Ä¿Â¼£¬²¢ÇĞ»»µ½¹¤×÷Ä¿Â¼
+	2>zlib  http://www.zlib.net/ ä¸‹è½½ wget http://www.zlib.net/zlib-1.2.11.tar.gz
+	./configure é…ç½® ï¼Œ makeç¼–è¯‘ ,make check æµ‹è¯•ï¼Œmake install
+	3>openssl wget https://github.com/openssl/openssl/archive/OpenSSL_1_1_1a.tar.gz(è®°ä½ç”¨configä¸è¦ç”¨configure)
+	./config  --prefix=`pwd`/libs é…ç½® ï¼Œ makeç¼–è¯‘ ,make check æµ‹è¯•ï¼Œmake install ï¼Œå¾…æ‰€æœ‰æ‰§è¡Œå®Œæˆä¹‹åï¼Œå‘ç°libsé‡Œé¢æœ‰åº“
+
+2. åˆ›å»ºä¸€ä¸ªå·¥ä½œç›®å½•ï¼Œå¹¶åˆ‡æ¢åˆ°å·¥ä½œç›®å½•
 mkdir /usr/jason/nginx
 cd /usr/jason/nginx
 
-3. ÏÂÔØ nginx ºÍ nginx-rtmpÔ´Âë£¨wgetÊÇÒ»¸ö´ÓÍøÂçÉÏ×Ô¶¯ÏÂÔØÎÄ¼şµÄ×ÔÓÉ¹¤¾ß£©
+3. ä¸‹è½½ nginx å’Œ nginx-rtmpæºç ï¼ˆwgetæ˜¯ä¸€ä¸ªä»ç½‘ç»œä¸Šè‡ªåŠ¨ä¸‹è½½æ–‡ä»¶çš„è‡ªç”±å·¥å…·ï¼‰
 wget https://github.com/nginx/nginx/archive/release-1.15.8.tar.gz
 wget https://github.com/arut/nginx-rtmp-module/archive/v1.2.1.tar.gz
 
-4. °²×°unzip¹¤¾ß£¬½âÑ¹ÏÂÔØµÄ°²×°°ü
+4. å®‰è£…unzipå·¥å…·ï¼Œè§£å‹ä¸‹è½½çš„å®‰è£…åŒ…
 sudo apt-get install unzip
 
-5.½âÑ¹ nginx ºÍ nginx-rtmp°²×°°ü
+5.è§£å‹ nginx å’Œ nginx-rtmpå®‰è£…åŒ…
 tar -zxvf release-1.15.8.tar.gz
--zxvf·Ö±ğÊÇËÄ¸ö²ÎÊı
-x : ´Ó tar °üÖĞ°ÑÎÄ¼şÌáÈ¡³öÀ´
-z : ±íÊ¾ tar °üÊÇ±» gzip Ñ¹Ëõ¹ıµÄ£¬ËùÒÔ½âÑ¹Ê±ĞèÒªÓÃ gunzip ½âÑ¹
-v : ÏÔÊ¾ÏêÏ¸ĞÅÏ¢
-f xxx.tar.gz :  Ö¸¶¨±»´¦ÀíµÄÎÄ¼şÊÇ xxx.tar.gz
+-zxvfåˆ†åˆ«æ˜¯å››ä¸ªå‚æ•°
+x : ä» tar åŒ…ä¸­æŠŠæ–‡ä»¶æå–å‡ºæ¥
+z : è¡¨ç¤º tar åŒ…æ˜¯è¢« gzip å‹ç¼©è¿‡çš„ï¼Œæ‰€ä»¥è§£å‹æ—¶éœ€è¦ç”¨ gunzip è§£å‹
+v : æ˜¾ç¤ºè¯¦ç»†ä¿¡æ¯
+f xxx.tar.gz :  æŒ‡å®šè¢«å¤„ç†çš„æ–‡ä»¶æ˜¯ xxx.tar.gz
 
 unzip master.zip
 
-6. ÇĞ»»µ½ nginx-Ä¿Â¼
+6. åˆ‡æ¢åˆ° nginx-ç›®å½•
 cd nginx-release-1.15.8
 
-7.Ìí¼Ó nginx-rtmp Ä£°å±àÒëµ½ nginx
+7.æ·»åŠ  nginx-rtmp æ¨¡æ¿ç¼–è¯‘åˆ° nginx
 ./auto/configure --add-module=/test2/nginx/nginx-rtmp-module-1.2.1 --with-openssl=/test2/nginx/openssl-OpenSSL_1_1_1a
 
-Èç¹ûpcreºÍzlib³öÏÖÀàËÆµÄÎÊÌâ£¬Ö¸¶¨Â·¾¶¾Í¿É¡£
---with-pcre=/usr/local/pcre-7.7 --with-zlib=/usr/local/zlib-1.2.3 --with-http_stub_status_module£©
+å¦‚æœpcreå’Œzlibå‡ºç°ç±»ä¼¼çš„é—®é¢˜ï¼ŒæŒ‡å®šè·¯å¾„å°±å¯ã€‚
+--with-pcre=/usr/local/pcre-7.7 --with-zlib=/usr/local/zlib-1.2.3 --with-http_stub_status_moduleï¼‰
 
-³öÏÖÏÂÃæ£¬Ôò´ú±í³É¹¦ÁË£¬¶¼foundÁË
+å‡ºç°ä¸‹é¢ï¼Œåˆ™ä»£è¡¨æˆåŠŸäº†ï¼Œéƒ½foundäº†
 Configuration summary
   + using system PCRE library
   + using OpenSSL library: /test2/nginx/openssl-OpenSSL_1_1_1a
@@ -48,63 +48,63 @@ Configuration summary
 	...
 
 
-8.±àÒë°²×° 
+8.ç¼–è¯‘å®‰è£…
 make
 make install
 
-Éú³ÉµÄÂ·¾¶ÔÚ£º/usr/local/nginxÀïÃæ , ½Å±¾ÔÚ/usr/local/nginx/sbinÀïÃæ
+ç”Ÿæˆçš„è·¯å¾„åœ¨ï¼š/usr/local/nginxé‡Œé¢ , è„šæœ¬åœ¨/usr/local/nginx/sbiné‡Œé¢
 
 
 
-9.ÅäÖÃnginx
+9.é…ç½®nginx
 	cp /test2/nginx/nginx-rtmp-module-1.2.1/test/nginx.conf /usr/local/nginx/conf/nginx.conf
 
-10. Æô¶¯nginx
+10. å¯åŠ¨nginx
 	cd /usr/local/nginx/sbin
-	Ö´ĞĞ ./nginx  Æô¶¯
-	£¨²¿·Ö»úÆ÷ÉÏÃæ¿ÉÄÜ³öÏÖNginx: error while loading shared libraries: libpcre.so.1
-	ĞèÒª°ÑpcroÀïÃæµÄso ¿½±´µ½libÎÄ¼ş¼ĞÀïÃæ¼´¿É,ln -s /usr/local/lib/libpcre.so.1 /lib64/£©
-	
-	lsof -i tcp:8080  ¼ì²â8080ÊÇ·ñ±»Õ¼¾İ£¬Èç¹û±»ÆäËûpidÕ¼¾İ¾ÍÖ±½ÓkillÆäËûµÄpid(kill 7056(Õ¼ÓÃ8080¶Ë¿ÚµÄpid))
-11. Í£Ö¹nginx
+	æ‰§è¡Œ ./nginx  å¯åŠ¨
+	ï¼ˆéƒ¨åˆ†æœºå™¨ä¸Šé¢å¯èƒ½å‡ºç°Nginx: error while loading shared libraries: libpcre.so.1
+	éœ€è¦æŠŠpcroé‡Œé¢çš„so æ‹·è´åˆ°libæ–‡ä»¶å¤¹é‡Œé¢å³å¯,ln -s /usr/local/lib/libpcre.so.1 /lib64/ï¼‰
+
+	lsof -i tcp:8080  æ£€æµ‹8080æ˜¯å¦è¢«å æ®ï¼Œå¦‚æœè¢«å…¶ä»–pidå æ®å°±ç›´æ¥killå…¶ä»–çš„pid(kill 7056(å ç”¨8080ç«¯å£çš„pid))
+11. åœæ­¢nginx
 	./nginx -s stop
-	
-	ÍÆÁ÷£º.\ffmpeg.exe -re -i D:\android\ffmpeg\source\4.1\ffmpeg-4.1-win64-static\bin\input.mp4 -vcodec libx264 -acodec aac -f flv rtmp://192.168.139.128/myapp/mystream
-	
-		±¸×¢£º192.168.139.128 ÊÇ·şÎñÆ÷µÄip, myapp ÊÇ×Ô¼ºÅäÖÃconfÀïÃæµÄrtmpµÄÃû×Ö£¬mystreamÊÇÃØÔ¿£¬Ëæ±ãĞ´µÄÒ»¸öÃû×Ö
-	
-	À­Á÷£ºrtmp://192.168.139.128/myapp/mystream
-	Ê¹ÓÃVLC:
-		File->Open Network¡­ 
-		ÉèÖÃÀ­Á÷µØÖ·£ºrtmp://localhost:1066/rtmplive/home
-	
-	
+
+	æ¨æµï¼š.\ffmpeg.exe -re -i D:\android\ffmpeg\source\4.1\ffmpeg-4.1-win64-static\bin\input.mp4 -vcodec libx264 -acodec aac -f flv rtmp://192.168.139.128/myapp/mystream
+
+		å¤‡æ³¨ï¼š192.168.139.128 æ˜¯æœåŠ¡å™¨çš„ip, myapp æ˜¯è‡ªå·±é…ç½®confé‡Œé¢çš„rtmpçš„åå­—ï¼Œmystreamæ˜¯ç§˜é’¥ï¼Œéšä¾¿å†™çš„ä¸€ä¸ªåå­—
+
+	æ‹‰æµï¼šrtmp://192.168.139.128/myapp/mystream
+	ä½¿ç”¨VLC:
+		File->Open Networkâ€¦
+		è®¾ç½®æ‹‰æµåœ°å€ï¼šrtmp://localhost:1066/rtmplive/home
+
+
 ------------------------------------------------------------------------------------------------------------
 
 
 
 
-9. °²×°nginx init ½Å±¾
+9. å®‰è£…nginx init è„šæœ¬
 sudo wget https://raw.github.com/JasonGiedymin/nginx-init-ubuntu/master/nginx -O /etc/init.d/nginx
 sudo chmod u+x /etc/init.d/nginx
 sudo update-rc.d nginx defaults
 
-10. Æô¶¯ºÍÍ£Ö¹nginx ·şÎñ£¬Éú³ÉÅäÖÃÎÄ¼ş
+10. å¯åŠ¨å’Œåœæ­¢nginx æœåŠ¡ï¼Œç”Ÿæˆé…ç½®æ–‡ä»¶
 sudo service nginx start
 sudo service nginx stop
 
-11. °²×° FFmpeg(./configure Ö´ĞĞ°²×°ffmpeg)
+11. å®‰è£… FFmpeg(./configure æ‰§è¡Œå®‰è£…ffmpeg)
 make
 make install
 
-12. ÅäÖÃ nginx-rtmp ·şÎñÆ÷
-´ò¿ª /usr/local/nginx/conf/nginx.conf
-ÔÚÄ©Î²Ìí¼ÓÈçÏÂ ÅäÖÃ
+12. é…ç½® nginx-rtmp æœåŠ¡å™¨
+æ‰“å¼€ /usr/local/nginx/conf/nginx.conf
+åœ¨æœ«å°¾æ·»åŠ å¦‚ä¸‹ é…ç½®
 
-¸´ÖÆ´úÂë
+å¤åˆ¶ä»£ç 
 rtmp {
     server {
-            listen 1935;	// ¶Ë¿ÚºÅ
+            listen 1935;	// ç«¯å£å·
             chunk_size 4096;
 
             application live {
@@ -118,22 +118,22 @@ rtmp {
         }
     }
 }
-¸´ÖÆ´úÂë
-13. ±£´æÉÏÃæÅäÖÃÎÄ¼ş£¬È»ºóÖØĞÂÆô¶¯nginx·şÎñ
+å¤åˆ¶ä»£ç 
+13. ä¿å­˜ä¸Šé¢é…ç½®æ–‡ä»¶ï¼Œç„¶åé‡æ–°å¯åŠ¨nginxæœåŠ¡
 sudo service nginx restart
 
-14. Èç¹ûÄãÊ¹ÓÃÁË·À»ğÇ½£¬ÇëÔÊĞí¶Ë¿Ú tcp 1935
+14. å¦‚æœä½ ä½¿ç”¨äº†é˜²ç«å¢™ï¼Œè¯·å…è®¸ç«¯å£ tcp 1935
 
-16: Ê¹ÓÃ ¿Í»§¶Ë£¬Ê¹ÓÃ rtmpĞ­Òé½øĞĞÊÓÆµÊµÊ±²É¼¯
+16: ä½¿ç”¨ å®¢æˆ·ç«¯ï¼Œä½¿ç”¨ rtmpåè®®è¿›è¡Œè§†é¢‘å®æ—¶é‡‡é›†
 Field 1: rtmp://your.vultr.ip/live/
 Field 2: stream-key-your-set
 
 
-·şÎñÆ÷ÅäÖÃ²âÊÔ²¥·ÅÆ÷£º
-½«flash²¥·ÅÆ÷¸´ÖÆµ½Ä¿Â¼£º/usr/local/nginx/html/£¬È»ºóĞŞ¸Ä²¥·ÅµØÖ·
-vim index.html (src : xxxxx:xxx  ip¼°¶Ë¿Ú¸ü»»)
+æœåŠ¡å™¨é…ç½®æµ‹è¯•æ’­æ”¾å™¨ï¼š
+å°†flashæ’­æ”¾å™¨å¤åˆ¶åˆ°ç›®å½•ï¼š/usr/local/nginx/html/ï¼Œç„¶åä¿®æ”¹æ’­æ”¾åœ°å€
+vim index.html (src : xxxxx:xxx  ipåŠç«¯å£æ›´æ¢)
 
 
-ÓÃffplay²¥·ÅRTMPÖ±²¥Á÷£º
+ç”¨ffplayæ’­æ”¾RTMPç›´æ’­æµï¼š
 ffplay "rtmp://pub1.guoshi.com/live/newcetv1 live=1"
 
