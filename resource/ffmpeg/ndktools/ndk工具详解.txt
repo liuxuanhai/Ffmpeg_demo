@@ -1,0 +1,41 @@
+1.利用readelf命令输出动态so库中的所有函数
+	命令如下：
+		./arm*linux*androideabi>readelf >a libMemoryLeak.so > func.txt
+	打开func.txt可以看到so中的所有函数，如果运行Android设备上的应用报锴说找不 
+	到某个JNI方法，就可以使用这行命令将so库中的方法全部导出来，然后搜索对应的JNI方 
+	法，看看到底有没有被编译到动态库中，在最后有一个参数Tag_CPU_name写着ARM 
+	v7,代表以 armv7的架构进行编译。注意这里的输人so包一定要是obj目录下带symbol 
+	file的so库，而不应该是libs目录下的so库。
+2.利用objdump命令将so包反编译为实际的代码
+	指令如下：
+		./arm*linux*androideabi*objdump -dx libMemoryLeak.so > stacktrace.txt
+	打开stacktrace.txt，是这个动态so库的符号表信息，可以看到编译进来的所有方法以 
+	及调用堆栈的地址。后面介绍的动态检渊内存泄漏中，获取方法调用堆栈的地址信息就是这 
+	个地址。
+3.利用nm指令查看静态库中的符号表 
+	指令如下：
+	/arm*linux*androideabi*nm libaudio.a > symbol.file
+	打开symbol.file，可以看到静态库中所有的方法声明，如果在编译so动态库的过程中 
+	到undefined reference类型的错误，或者duplicated reference，可以使用这条指令将 
+	应静态库的所有方法都导出来，然后看一下到底有没有或者重复定义的方法。
+4.利用g++指令编译程序
+	指令如下：
+	SYS_ROOT=$NOKROOT/platforms/android-21/arch-arm/_arm-linux-androideabi-g++ -02 -DNDEBUG • -sysroot=$SYS_ROOT -o libMemoryLeak.so 
+	jni/test-memory.cpp -lm -lstdc++
+	不论是.a的静态库还是.so的动态库，甚至是可执行的命令行工具，都可以使用g++编 
+	，而常使用的ndk-build命令实际上是对Androidmk以及g++的一种封装，这种封装将 
+	+的细节封装起来，让开发者更加方便。附录中介绍NE10的交叉编译到Android平台， 
+	用的就是g++的编译方式，只不过用CMake封装了 一次。
+5.利用addr21ine将调用地址转化成代码行数
+	指令如下：
+		./arm*linux*androideabi*addr21ine -e libMemoryLeak.so 0xcf9c > file.line
+		文件file.line里就是调用地址0xcf9c对应的代码文件和对应的行数，注意这里输入的
+		so'i^Sobj目录下的带有symbol file的so,否则解析代码文件与行数不成功
+6.利用ndk-stack还原谁桟信息
+	指令如下：
+		ndk*stack -sym libMemoryLeak.so -dump tombstone_01 > log.txt
+		当程序出现Native层的Crash时，系统会拦截幷将Crash的堆栈俏息放到/data/tombstones目录下，
+		存储成为一个文件，系统会自动循环覆盖，幷且只会保留最近的1阶文件4
+		如何将这里的信息转换为实际的代码文件可以使用ndk-stack工具，这个工具和ndk-build
+		在同一个目录下#注意，-sym后面的so文件必须是obj目录下的带有symbol file的动态 
+		库，-dump后面的就是从Android设备中取出来的Crash文件6

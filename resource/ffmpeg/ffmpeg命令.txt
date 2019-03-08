@@ -1,4 +1,4 @@
-提取单独的音频： ffmpeg -i input.avi -acodec copy -vn -y output.avi
+﻿提取单独的音频： ffmpeg -i input.avi -acodec copy -vn -y output.avi
 提取单独的视频： ffmpeg -i input.avi -vcodec copy -an -y output.avi
 
 视频解复用
@@ -81,6 +81,11 @@ ffmpeg -f gdigrab -i desktop out.mpg
 
 ffmpeg从视频中生成gif图片：
 ffmpeg -i capx.mp4 -t 10 -s 320x240 -pix_fmt rgb24 jidu1.gif
+
+FFmepg faststart参数的使用，来理解mdat和moov的顺序的意义:
+ffmpeg -i input.flv -c copy -f mp4 -movflags faststart output.mp4
+把原来的moov box是在mdat的下面，改为在其前面
+如果希望MP4文件被快速打开，则需要moov存放在mdat的前面；如果放在后面，则需要将MP4文件下载完成后才可以进行播放。
 
 
 

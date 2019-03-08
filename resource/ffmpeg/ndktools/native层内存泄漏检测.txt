@@ -1,0 +1,6 @@
+1.native代码的静态检测
+	cppCheck 检测静态代码
+2.native代码运行中的检测
+	leakTracer检测代码
+3.breakpad收集线上的crash
+	

@@ -1,0 +1,29 @@
+MP4分析工具：
+	Elecard StreamEye，mp4box，mp4info
+mp4重要的box：
+	1. ftyp（File Type Box）
+	该Box有且只有1个，并且只能被包含在文件层，而不能被其他Box包含。该Box应该被放在文件的最开始，指示该MP4文件应用的相关信息。
+
+	“ftyp” body依次包括1个32位的major brand（4个字符），1个32位的minor version（整数）和1个以32位（4个字符）为单位元素的数组Compatible Brands。
+
+	2. moov（Movie Box）
+	该box包含了文件媒体的metadata信息，“moov”是一个container box，具体内容信息由子box诠释。同File Type Box一样，该box有且只有一个，且只被包含在文件层。一般情况下，“moov”会紧随“ftyp”出现。
+
+	moov定义了一个MP4文件中的数据信息，类型是moov，是一个容器Atom，其至少必须包含一下三种Atom中的一种：mvhd标签、cmov标签、rmra标签。
+
+	mvhd标签：Movie Header Atom，存放未压缩过的影片信息的头容器。
+	cmov标签：Compressed Movie Atom，压缩鬼哦的电影信息容器，此容器不常用。
+	rmra标签：Reference Movie Atom，参考电影信息容器，此容器不常用。
+	一般情况下，“moov”中会包含1个“mvhd”和若干个“trak”。其中“mvhd”为Header Box，一般作为“moov”的第一个子Box出现（对于其他Container Box来说，Header Box都应作为首个子box出现）。“trak”包含了一个track的相关信息，是一个Container Box。
+
+	3. trak（Track Box）
+	“trak”也是一个container box，其子box包含了该track的媒体数据引用和描述（hint track除外）。一个MP4文件中的媒体可以包含多个track，且至少有一个track，这些track之间彼此独立，有自己的时间和空间信息。“trak”必须包含一个“tkhd”和一个“mdia”，此外还有很多可选的box（略）。其中“tkhd”为track header box，“mdia”为media box，该box是一个包含一些track媒体数据信息box的container box。
+
+	4. mdat（Meida Data Box）
+	该box包含于文件层，可以有多个，也可以没有（当媒体数据全部为外部文件引用时），用来存储媒体数据。数据直接跟在box type字段后面，具体数据结构的意义需要参考metadata（主要在sample table中描述）。 
+
+	5. free或skip（Free Space Box）
+	“free”中的内容是无关紧要的，可以被忽略。该box被删除后，不会对播放产生任何影响。
+
+	6. stbl（Sample Table Box）
+	“stbl”几乎是普通的MP4文件中最复杂的一个box了，首先需要回忆一下sample的概念。sample是媒体数据存储的单位，存储在media的chunk中，chunk和sample的长度均可互不相同，如下图所示。

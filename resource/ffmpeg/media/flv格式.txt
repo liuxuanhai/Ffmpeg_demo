@@ -1,0 +1,41 @@
+分析工具：
+	FlvAnalyzer，FLV Format Analysis 
+	
+
+FLV包括文件头（File Header）和文件体（File Body）两部分，其中文件体由一系列的Tag组成
+
+1. 文件头 Header
+	Header 部分记录了FLV的类型、版本等信息，是FLV的开头。一般差不多占9bytes。具体格式如下：
+
+	1. 文件标识（3B）：总是为”FLV”, 0x46 0x4c 0x56
+
+	2. 版本（1B）：目前为0x01
+
+	3. 流信息（1B）：文件的标志位说明。前5位保留，必须为0；第6位为音频Tag：1表示有音频；第七位保留，为0； 第8位为视频Tag：1表示有视频
+
+	4. Header长度（4B）：整个Header的长度，一般为9（版本为0x01时）；大于9表示下面还有扩展信息。即0x00000009。
+2. 文件体 FLV Body
+	文件体由一系列的Tag组成。
+
+	其中，每个Tag前面还包含了Previous Tag Size字段，表示前面一个Tag的大小。Tag的类型可以是视频、音频和Script，每个Tag只能包含以上三种类型的数据中的一种。
+3. Tag
+	每个Tag由也是由两部分组成的：Tag Header和Tag Data。Tag Header里存放的是当前Tag的类型、数据区（Tag Data）长度等信息，具体如下：
+
+	Tag类型（1）：0x08：音频;     0x09：视频;      0x12：脚本;     其他：保留
+
+	数据区长度（3）：数据区的长度
+
+	时间戳（3）：整数，单位是毫秒。对于脚本型的tag总是0 （CTS）
+
+	时间戳扩展（1）：将时间戳扩展为4bytes，代表高8位。很少用到
+
+	StreamsID（3）：总是0
+
+	数据区（由数据区长度决定）：数据实体
+
+	下面是三个Tag类型说明：
+
+	Audio Tag Data结构（音频类型） ：音频Tag Data区域开始的第一个字节包含了音频数据的参数信息，从第二个字节开始为音频流数据。
+
+	video Tag Data结构(视频类型)：视频Tag Data开始的第一个字节包含视频数据的参数信息，从第二个字节开始为视频流数据。
+	Script Tag Data结构（脚本类型、帧类型）：该类型Tag又被称为MetaData Tag,存放一些关于FLV视频和音频的元信息，比如：duration、width、height等。通常该类型Tag会作为FLV文件的第一个tag，并且只有一个，跟在File Header后。
