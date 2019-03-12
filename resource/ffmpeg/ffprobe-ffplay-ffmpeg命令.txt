@@ -1,4 +1,4 @@
-ffprobe
+﻿ffprobe
 	文件信息：ffprobe xxx
 	输出格式信息：ffprobe -show_format  xxx.mp4
 	每个流的具体信息（以JSON格式）：ffprobe -print_format json  -show_streams xxx.mp4

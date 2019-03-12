@@ -9,6 +9,7 @@ ffmpeg –i test.avi –vcodec copy –an –f m4v test.264
 ffmpeg –i test.mp4 –vcodec h264 –s 352*278 –an –f m4v test.264              //转码为码流原始文件
 ffmpeg –i test.mp4 –vcodec h264 –bf 0 –g 25 –s 352*278 –an –f m4v test.264  //转码为码流原始文件
 ffmpeg –i test.avi -vcodec mpeg4 –vtag xvid –qsame test_xvid.avi            //转码为封装文件
+ffmpeg -i input.mp4 scale=1080:1920 output.mp4   // 转换分辨率
 //-bf B帧数目控制，-g 关键帧间隔控制，-s 分辨率控制
 
 视频合成（剪辑之后的视频）：
