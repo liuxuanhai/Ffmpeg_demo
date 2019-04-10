@@ -1,6 +1,6 @@
 #!/bin/bash
 make clean
-export NDK=/usr/work/ndk/android-ndk-r14b
+export NDK=/test2/ndk/android-ndk-r14b
 export SYSROOT=$NDK/platforms/android-9/arch-arm/
 export TOOLCHAIN=$NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64
 export CPU=armeabi-v7a

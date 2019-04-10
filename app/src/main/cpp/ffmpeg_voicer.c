@@ -22,8 +22,8 @@
 #define LOGI(FORMAT, ...) __android_log_print(ANDROID_LOG_INFO,"FFmpeg",FORMAT,##__VA_ARGS__);
 #define LOGE(FORMAT, ...) __android_log_print(ANDROID_LOG_ERROR,"FFmpeg",FORMAT,##__VA_ARGS__);
 
-//音频解码 采样率 新版版可达48000 * 4
-#define MAX_AUDIO_FRME_SIZE  2 * 44100
+//音频解码 采样率 新版版可达48000 * 4 16big  2通道 =44100*（ 16/2 ）*2
+#define MAX_AUDIO_FRME_SIZE  2 * 44100*2
 
 
 //音频解码
