@@ -44,7 +44,14 @@ ffplay
 		'down/up'           快退/快进 1 分钟
 		'page down/page up' 跳转到前一章/下一章(如果没有章节，快退/快进 10 分钟)
 		'mouse click'       跳转到鼠标点击的位置(根据鼠标在显示窗口点击的位置计算百分比)
+	
 	播放文件：ffplay xxx
+	循环播放视频10遍：ffplay xxx.mp4 -loop 10
+	播放第一个音频流（没有就静音）: ffplay xxx.mkv -ast 1
+	播放第一个视频流（没有就静音）: ffplay xxx.mkv -vst 1
+	播放pcm音频：ffplay	song.pcm	-f s16le -channels	2 -ar 44100
+	播放yuv视频：ffplay -f rawvideo -pixel_format yuv420p -s 480*480 texture.yuv
+	播放rgb视频：ffplay -f rawvideo -pixel_format rgb24 -s 480*480 texture.rgb
 
 	音视频同步原理：
 		播放器接收到的视频帧或者音频帧，内部都是会有时间戳（PTS时钟）来标识它实际应该在什么时刻展示，实际的对齐策略如下：比较视频当前的播放时间和音频当前的播放时间，如果视频播放过快，则通过加大延迟或者重复播放来降低视频播放速度，如果视频播放满了，则通过减小延迟或者丢帧来追赶音频播放的时间点。关键就在于音视频时间的比较和延迟的计算，当前在比较的过程中会设置一个阈值，如果超过预设的阈值就应该作出调整（丢帧或者重复渲染），这就是整个对齐策略
@@ -90,15 +97,37 @@ ffmpeg
 		-vol volume：设置录制音量大小
 
 	其他命令:
+		ffmpeg支持的格式：ffmpeg -formats
 		视频裁剪： ffmpeg -i pm.mp4 -ss 00:00:50.0 -codec copy -t 20 output.mp4（会导致裁剪时间不准确，开头黑屏等）
 		优化后的视频裁剪：ffmpeg -ss 10 -t 15 -accurate_seek -i pm.mp4 -codec copy output.mp4 （裁剪开始时间未生效）
+		视频文件切割多个文件：ffmpeg	-i	input.mp4	-t	00:00:50	-c	copy	small-1.mp4	-ss	00:00:50	-codec	copy								small-2.mp4
+
 		提取一个视频文件中的音频，并保存为文件：ffmpeg -i pm.mp4 -vn -acodec copy output.m4a
 		将视频中的音频静音，只保留视频：ffmpeg -i pm.mp4 -an -vcodec copy output.mp4
-		将一段视频推送到流媒体服务器上：ffmpeg -re -i pm.mp4 -acodec copy -vcodec copy -f flv rtmp://127.0.0.1/rh/mylive
+		MP4抽取h264文件：ffmpeg -i output.mp4 -an -vcodec copy -bsf:v h264_mp4toannexb output.h264
+		aac音频,h246视频合成文件：ffmpeg -i test.aac -i test.h264 -acodec copy -bsf:a aac_adtstoasc -vcodec copy -f        mp4 output.mp4
+		对音频文件格式转换：ffmpeg -i input.wav -acodec libfdk_aac output.aac
+		wav音频文件取出pcm数据：ffmpeg -i input.wav -acodec pcm_s16le -f s16le output.pcm
+		对视频格式转换，重新编码到MP4:ffmpeg -i input.flv -vcodec libx264 -acodec copy output.mp4
+		将mp4格式转换为gif动图（帧率10，时间5s）：ffmpeg -i input.mp4 -vf scale=100:-1 -t 5 -r 10 image.gif
+		4s截取一张视频画面生成图片：ffmpeg -i output.mp4 -r 0.25 frames_%04d.png
+		图片生成gif:ffmpeg	-i	frames_%04d.png	-r	5	output.gif
+		改变音频音量：ffmpeg	-i	input.wav	-af	‘volume=0.5’	output.wav
+		淡入效果：ffmpeg	-i	input.wav -filter_complex afade=t=in:ss=0:d=5 output.wav
+		淡出效果：ffmpeg -i input.wav -filter_complex afade=t=out:st=200:d=5 output.wav
+		声音合并：ffmpeg -i vocal.wav -i accompany.wav -filter_complex        amix=inputs=2:duration=shortest output.wav
+		声音变速不变调（速度0.5，时间就变长2倍）：ffmpeg -i vocal.wav -filter_complex atempo=0.5 output.wav
+		水印：ffmpeg -i input.mp4 -i changba_icon.png -filter_complex        '[0:v][1:v]overlay=main_w-overlay_w-10:10:1[out]' -map '[out]' output.mp4
+		视频提亮（brightness -1~1，默认0）：ffmpeg -i input.flv -c:v libx264 -b:v 800k  -c:a libfdk_aac -vf eq=brightness=0.25        -f mp4 output.mp4
+		对比度（contrast -2~2，默认1）：ffmpeg -i input.flv -c:v libx264 -b:v 800k  -c:a libfdk_aac -vf eq=contrast=1.5 -f        mp4 output.mp4
+		视频旋转：ffmpeg -i input.mp4 -vf "transpose=1" -b:v 600k output.mp4
+		裁剪效果：ffmpeg -i input.mp4 -an -vf "crop=240:480:120:0" -vcodec libx264 -b:v 600k output.mp4
+		RGBA变JPEG:ffmpeg -f rawvideo -pix_fmt rgba -s 480*480 -i texture.rgb -f image2 -vcodec mjpeg        output.jpg
+		YUV变JPEG:ffmpeg -f rawvideo -pix_fmt yuv420p -s 480*480 -i texture.yuv -f image2 -vcodec mjpeg        output.jpg
+  
+		将一段视频推送到流媒体服务器上(re实际播放速度推流)：ffmpeg -re -i pm.mp4 -acodec copy -vcodec copy -f flv rtmp://127.0.0.1/rh/mylive
 		将流媒体服务器上的流dump到本地：ffmpeg -i rtmp://127.0.0.1/rh/mylive -acodec copy -vcodec copy -f flv test.flv
-
-		
-	
+		将2个音频封装一个文件：ffmpeg -i 131.mp3 -i 134.mp3 -map 0:a -c:a:0 libfdk_aac -b:a:0 96k -map 1:a -c:a:1 libfdk_aac -b:a:1 64k -vn -f mp4 output.m4a
 
 
 
