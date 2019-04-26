@@ -17,11 +17,12 @@
 		
 　    在“用户身份验证”中填入可用的登录Ubuntu的用户名和密码。
 
-　    设置完这两步就可以使用XShell控制Ubuntu主机了。
+　    设置完这两步就可以使用XShell控制Ubuntu主机了(ssh)。
 
    1.4 乱码配置 在xshell客户端设在编码utf-8 (terminal)
 
  
+注意：su命令不能切换root，提示su: Authentication failure，只要你sudo passwd root过一次之后，下次再su的时候只要输入密码就可以成功登录了
 
 2 vim配置
 	
@@ -70,7 +71,7 @@
      local_root=/forlinx       （新增共享文件目录，放到文件最后）
    2.4.重新启动 vsftpd 服务：
     sudo /etc/init.d/vsftpd restart
-   2.5 windows 客户端输入ip 用户名和密码，连接该服务目录
+   2.5 windows 客户端输入ip 用户名和密码，FTP连接该服务目录
    
    
    
